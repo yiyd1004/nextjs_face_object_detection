@@ -5,18 +5,25 @@
 import AutoRecord from "@/components/AutoRecord";
 import DarkMode from "@/components/DarkMode";
 import FlipCamera from "@/components/FlipCamera";
+import ModelSelect from "@/components/ModelSelect";
+import ModelSetting from "@/components/ModelSetting";
 import RecordVideo from "@/components/RecordVideo";
 import ScreenShot from "@/components/ScreenShot";
 import Volume from "@/components/Volume";
 import { Separator } from "@/components/ui/separator";
+import FaceDetection from "@/mediapipe/face-detection";
+import GestureRecognition from "@/mediapipe/gesture-recognition";
+import initMediaPipVision from "@/mediapipe/mediapipe-vision";
+import ObjectDetection from "@/mediapipe/object-detection";
 import { beep } from "@/utils/audio";
-import { FACE_DETECTION_MODE, OBJ_DETECTION_MODE } from "@/utils/definitions";
-import { drawOnCanvas } from "@/utils/drawTool";
+import {
+    FACE_DETECTION_MODE,
+    GESTURE_RECOGNITION_MODE,
+    ModelLoadResult,
+    NO_MODE,
+    OBJ_DETECTION_MODE,
+} from "@/utils/definitions";
 import "@mediapipe/tasks-vision";
-import { FaceDetector, FilesetResolver } from "@mediapipe/tasks-vision";
-import * as cocossd from "@tensorflow-models/coco-ssd";
-import "@tensorflow/tfjs-backend-cpu";
-import "@tensorflow/tfjs-backend-webgl";
 import clsx from "clsx";
 import { RefObject, useEffect, useRef, useState } from "react";
 import { Rings } from "react-loader-spinner";
@@ -37,10 +44,10 @@ const Home = (props: Props) => {
     const [isAutoRecordEnabled, setAutoRecordEnabled] =
         useState<boolean>(false);
     const [volume, setVolume] = useState<number>(0.8);
-    const [objModel, setObjModel] = useState<cocossd.ObjectDetection>();
-    const [faceModel, setFaceModel] = useState<FaceDetector>();
+    const [modelLoadResult, setModelLoadResult] = useState<ModelLoadResult[]>();
     const [loading, setLoading] = useState(false);
-    const [mode, setMode] = useState<number>(FACE_DETECTION_MODE);
+    const [currentMode, setCurrentMode] = useState<number>(NO_MODE);
+    const [enableWebcam, setEnableWebcam] = useState<boolean>(false);
 
     const takeScreenShot = () => {};
     const recordVideo = () => {
@@ -60,25 +67,25 @@ const Home = (props: Props) => {
         }
     };
 
-    const initObjModel = async () => {
-        const loadedModel: cocossd.ObjectDetection = await cocossd.load({
-            base: "mobilenet_v2",
-        });
-        setObjModel(loadedModel);
-    };
+    const initModels = async () => {
+        const vision = await initMediaPipVision();
 
-    const initFaceModel = async () => {
-        const vision = await FilesetResolver.forVisionTasks(
-            "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
-        );
-        const faceDetector = await FaceDetector.createFromOptions(vision, {
-            baseOptions: {
-                modelAssetPath: "/model/blaze_face_short_range.tflite",
-                delegate: "CPU",
-            },
-            runningMode: "VIDEO",
-        });
-        setFaceModel(faceDetector);
+        if (vision) {
+            const models = [
+                ObjectDetection.initModel(vision),
+                FaceDetection.initModel(vision),
+                GestureRecognition.initModel(vision),
+            ];
+
+            const results = await Promise.all(models);
+
+            const enabledModels = results.filter((result) => result.loadResult);
+
+            if (enabledModels.length > 0) {
+                setCurrentMode(enabledModels[0].mode);
+            }
+            setModelLoadResult(enabledModels);
+        }
     };
 
     const resizeCanvas = (
@@ -97,54 +104,59 @@ const Home = (props: Props) => {
 
     const runPrediction = async () => {
         if (
-            objModel &&
-            faceModel &&
             webcamRef.current &&
             webcamRef.current.video &&
             webcamRef.current.video.readyState === 4
         ) {
-            if (mode === OBJ_DETECTION_MODE) {
-                const objPredictions: cocossd.DetectedObject[] =
-                    await objModel.detect(webcamRef.current.video);
-
-                resizeCanvas(canvasRef, webcamRef);
-                drawOnCanvas(
-                    OBJ_DETECTION_MODE,
-                    mirrored,
-                    objPredictions,
-                    null,
-                    canvasRef.current?.getContext("2d")
-                );
-            } else if (mode === FACE_DETECTION_MODE) {
-                performance;
-                const facePrediction = faceModel.detectForVideo(
-                    webcamRef.current.video,
-                    performance.now()
+            if (currentMode === OBJ_DETECTION_MODE) {
+                const objPredictions = ObjectDetection.detectObject(
+                    webcamRef.current.video
                 );
 
-                resizeCanvas(canvasRef, webcamRef);
-                drawOnCanvas(
-                    FACE_DETECTION_MODE,
-                    mirrored,
-                    null,
-                    facePrediction,
-                    canvasRef.current?.getContext("2d")
+                if (objPredictions?.detections) {
+                    resizeCanvas(canvasRef, webcamRef);
+                    ObjectDetection.drawOnCanvas(
+                        mirrored,
+                        objPredictions.detections,
+                        canvasRef.current?.getContext("2d")
+                    );
+                }
+            } else if (currentMode === FACE_DETECTION_MODE) {
+                const facePredictions = FaceDetection.detectFace(
+                    webcamRef.current.video
                 );
+
+                if (facePredictions?.detections) {
+                    resizeCanvas(canvasRef, webcamRef);
+                    FaceDetection.drawOnCanvas(
+                        mirrored,
+                        facePredictions.detections,
+                        canvasRef.current?.getContext("2d")
+                    );
+                }
+            } else if (currentMode === GESTURE_RECOGNITION_MODE) {
+                const gesturePrediction = GestureRecognition.detectGesture(
+                    webcamRef.current.video
+                );
+                console.log(gesturePrediction);
             }
         }
     };
 
+    const onModeChange = (mode: string) => {
+        setCurrentMode(parseInt(mode));
+    };
+
     useEffect(() => {
         setLoading(true);
-        initObjModel();
-        initFaceModel();
+        initModels();
     }, []);
 
     useEffect(() => {
-        if (objModel && faceModel) {
+        if (modelLoadResult) {
             setLoading(false);
         }
-    }, [objModel, faceModel]);
+    }, [modelLoadResult]);
 
     useEffect(() => {
         interval = setInterval(() => {
@@ -152,22 +164,26 @@ const Home = (props: Props) => {
         }, 100);
 
         return () => clearInterval(interval);
-    }, [webcamRef.current, objModel, faceModel, mirrored]);
+    }, [webcamRef.current, modelLoadResult, mirrored, currentMode]);
 
     return (
         <div className="flex flex-col h-screen">
             {/* Camera area */}
             <div className="relative h-[80%]">
                 <div className="relative w-screen h-full">
-                    <Webcam
-                        ref={webcamRef}
-                        mirrored={mirrored}
-                        className="h-full w-full object-contain p-2"
-                    />
-                    <canvas
-                        ref={canvasRef}
-                        className="absolute top-0 left-0 h-full w-full object-contain"
-                    ></canvas>
+                    {enableWebcam ? (
+                        <>
+                            <Webcam
+                                ref={webcamRef}
+                                mirrored={mirrored}
+                                className="h-full w-full object-contain p-2"
+                            />
+                            <canvas
+                                ref={canvasRef}
+                                className="absolute top-0 left-0 h-full w-full object-contain"
+                            ></canvas>
+                        </>
+                    ) : null}
                 </div>
             </div>
             {/* Right area */}
@@ -198,6 +214,12 @@ const Home = (props: Props) => {
                         />
                     </div>
                     <div className="flex flex-row gap-2">
+                        <ModelSelect
+                            modelList={modelLoadResult}
+                            currentMode={currentMode.toString()}
+                            onModeChange={onModeChange}
+                        />
+                        <ModelSetting />
                         <Separator orientation="vertical" className="mx-2" />
                         <Volume
                             volume={volume}
