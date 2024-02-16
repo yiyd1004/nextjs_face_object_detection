@@ -19,12 +19,20 @@ const ObjectDetection = (() => {
     const MODEL_URL: string =
         "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/latest/efficientdet_lite0.tflite";
 
+    const CONFIG_MIN_RESULT_VALUE: number = 0;
+    const CONFIG_MAX_RESULT_VALUE: number = 10;
+    const CONFIG_MIN_SCORE_VALUE: number = 0;
+    const CONFIG_MAX_SCORE_VALUE: number = 1;
+    const CONFIG_DEFAULT_RESULT_SLIDER_STEP_VALUE: number = 1;
+    const CONFIG_DEFAULT_SCORE_SLIDER_STEP_VALUE: number = 0.1;
+
     let displayNamesLocale: string = "en";
-    let maxResults: number = -1;
+    let maxResults: number = 5;
     let scoreThreshold: number = 0.5;
     let runningMode: RunningMode = RUNNING_MODE_VIDEO;
 
     let objectDetector: ObjectDetector | null = null;
+    let isUpdating: boolean = false;
 
     const initModel = async (vision: any): Promise<ModelLoadResult> => {
         const result: ModelLoadResult = {
@@ -35,16 +43,7 @@ const ObjectDetection = (() => {
 
         try {
             if (vision) {
-                const config: ObjectDetectorOptions = {
-                    baseOptions: {
-                        modelAssetPath: MODEL_URL,
-                        delegate: DELEGATE_GPU,
-                    },
-                    displayNamesLocale: displayNamesLocale,
-                    maxResults: maxResults,
-                    scoreThreshold: scoreThreshold,
-                    runningMode: runningMode,
-                };
+                const config: ObjectDetectorOptions = getConfig();
 
                 objectDetector = await ObjectDetector.createFromOptions(
                     vision,
@@ -64,13 +63,52 @@ const ObjectDetection = (() => {
         return result;
     };
 
+    const getConfig = (): ObjectDetectorOptions => {
+        const config: ObjectDetectorOptions = {
+            baseOptions: {
+                modelAssetPath: MODEL_URL,
+                delegate: DELEGATE_GPU,
+            },
+            displayNamesLocale: displayNamesLocale,
+            maxResults: maxResults,
+            scoreThreshold: scoreThreshold,
+            runningMode: runningMode,
+        };
+
+        return config;
+    };
+
+    const setRunningMode = (mode: RunningMode) => {
+        runningMode = mode;
+    };
+
+    const setMaxResults = (max: number) => {
+        maxResults = max;
+    };
+
+    const setScoreThreshold = (score: number) => {
+        scoreThreshold = score;
+    };
+
+    const updateModelConfig = async () => {
+        if (objectDetector) {
+            isUpdating = true;
+            await objectDetector.setOptions(getConfig());
+            isUpdating = false;
+        }
+    };
+
+    const isModelUpdating = (): boolean => {
+        return isUpdating;
+    };
+
     const detectObject = (
         video: HTMLVideoElement
     ): ObjectDetectorResult | null => {
         if (objectDetector) {
             try {
                 const detection: ObjectDetectorResult =
-                    objectDetector.detectForVideo(video, video.currentTime);
+                    objectDetector.detectForVideo(video, performance.now());
 
                 return detection;
             } catch (error) {
@@ -188,9 +226,23 @@ const ObjectDetection = (() => {
     };
 
     return {
+        CONFIG_MIN_RESULT_VALUE: CONFIG_MIN_RESULT_VALUE,
+        CONFIG_MAX_RESULT_VALUE: CONFIG_MAX_RESULT_VALUE,
+        CONFIG_MIN_SCORE_VALUE: CONFIG_MIN_SCORE_VALUE,
+        CONFIG_MAX_SCORE_VALUE: CONFIG_MAX_SCORE_VALUE,
+        CONFIG_DEFAULT_RESULT_SLIDER_STEP_VALUE:
+            CONFIG_DEFAULT_RESULT_SLIDER_STEP_VALUE,
+        CONFIG_DEFAULT_SCORE_SLIDER_STEP_VALUE:
+            CONFIG_DEFAULT_SCORE_SLIDER_STEP_VALUE,
         initModel: initModel,
         detectObject: detectObject,
         drawOnCanvas: drawOnCanvas,
+        getConfig: getConfig,
+        setMaxResults: setMaxResults,
+        setScoreThreshold: setScoreThreshold,
+        setRunningMode: setRunningMode,
+        updateModelConfig: updateModelConfig,
+        isModelUpdating: isModelUpdating,
     };
 })();
 

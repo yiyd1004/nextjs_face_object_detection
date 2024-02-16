@@ -6,15 +6,16 @@ import AutoRecord from "@/components/AutoRecord";
 import DarkMode from "@/components/DarkMode";
 import FlipCamera from "@/components/FlipCamera";
 import ModelSelect from "@/components/ModelSelect";
-import ModelSetting from "@/components/ModelSetting";
 import RecordVideo from "@/components/RecordVideo";
 import ScreenShot from "@/components/ScreenShot";
 import Volume from "@/components/Volume";
+import ModelSetting from "@/components/model-settings/ModelSetting";
 import { Separator } from "@/components/ui/separator";
 import FaceDetection from "@/mediapipe/face-detection";
 import GestureRecognition from "@/mediapipe/gesture-recognition";
 import initMediaPipVision from "@/mediapipe/mediapipe-vision";
 import ObjectDetection from "@/mediapipe/object-detection";
+import { VideoDevicesContext } from "@/providers/VideoDevicesProvider";
 import { beep } from "@/utils/audio";
 import {
     FACE_DETECTION_MODE,
@@ -25,7 +26,7 @@ import {
 } from "@/utils/definitions";
 import "@mediapipe/tasks-vision";
 import clsx from "clsx";
-import { RefObject, useEffect, useRef, useState } from "react";
+import { RefObject, useContext, useEffect, useRef, useState } from "react";
 import { Rings } from "react-loader-spinner";
 import Webcam from "react-webcam";
 import { toast } from "sonner";
@@ -36,6 +37,8 @@ let interval: any = null;
 let stopTimeout: any = null;
 
 const Home = (props: Props) => {
+    const videoDeviceProvider = useContext(VideoDevicesContext);
+
     const webcamRef = useRef<Webcam>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -47,7 +50,7 @@ const Home = (props: Props) => {
     const [modelLoadResult, setModelLoadResult] = useState<ModelLoadResult[]>();
     const [loading, setLoading] = useState(false);
     const [currentMode, setCurrentMode] = useState<number>(NO_MODE);
-    const [enableWebcam, setEnableWebcam] = useState<boolean>(false);
+    const [enableWebcam, setEnableWebcam] = useState<boolean>(true);
 
     const takeScreenShot = () => {};
     const recordVideo = () => {
@@ -108,7 +111,10 @@ const Home = (props: Props) => {
             webcamRef.current.video &&
             webcamRef.current.video.readyState === 4
         ) {
-            if (currentMode === OBJ_DETECTION_MODE) {
+            if (
+                currentMode === OBJ_DETECTION_MODE &&
+                !ObjectDetection.isModelUpdating()
+            ) {
                 const objPredictions = ObjectDetection.detectObject(
                     webcamRef.current.video
                 );
@@ -171,12 +177,15 @@ const Home = (props: Props) => {
             {/* Camera area */}
             <div className="relative h-[80%]">
                 <div className="relative w-screen h-full">
-                    {enableWebcam ? (
+                    {enableWebcam && videoDeviceProvider?.webcamId ? (
                         <>
                             <Webcam
                                 ref={webcamRef}
                                 mirrored={mirrored}
                                 className="h-full w-full object-contain p-2"
+                                videoConstraints={{
+                                    deviceId: videoDeviceProvider.webcamId,
+                                }}
                             />
                             <canvas
                                 ref={canvasRef}
@@ -219,7 +228,7 @@ const Home = (props: Props) => {
                             currentMode={currentMode.toString()}
                             onModeChange={onModeChange}
                         />
-                        <ModelSetting />
+                        <ModelSetting mode={currentMode} />
                         <Separator orientation="vertical" className="mx-2" />
                         <Volume
                             volume={volume}

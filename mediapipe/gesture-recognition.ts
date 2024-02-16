@@ -90,7 +90,7 @@ const GestureRecognition = (() => {
         try {
             const detection = gestureRecognizer.recognizeForVideo(
                 video,
-                video.currentTime
+                performance.now()
             );
 
             return detection;

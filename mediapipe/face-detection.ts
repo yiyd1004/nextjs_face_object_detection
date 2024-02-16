@@ -18,9 +18,6 @@ const FaceDetection = (() => {
     const MODEL_URL: string =
         "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/latest/blaze_face_short_range.tflite";
 
-    const MIN_CONFIG_VALUE: number = 0;
-    const MAX_CONFIG_VALUE: number = 1;
-
     let minDetectionConfidence: number = 0.5;
     let minSuppressionThreshold: number = 0.3;
     let runningMode: RunningMode = RUNNING_MODE_VIDEO;
@@ -68,7 +65,7 @@ const FaceDetection = (() => {
         if (faceDetector) {
             try {
                 const detection: FaceDetectorResult =
-                    faceDetector.detectForVideo(video, video.currentTime);
+                    faceDetector.detectForVideo(video, performance.now());
 
                 return detection;
             } catch (error) {

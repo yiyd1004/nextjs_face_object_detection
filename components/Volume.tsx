@@ -18,15 +18,9 @@ const Volume = (props: Props) => {
     return (
         <HoverCard openDelay={0} closeDelay={0}>
             <HoverCardTrigger>
-                <Popover>
+                <Popover onOpenChange={(open: boolean) => setSliderOpen(open)}>
                     <PopoverTrigger asChild>
-                        <Button
-                            variant={"outline"}
-                            size={"icon"}
-                            onClick={() => {
-                                setSliderOpen((prev) => !prev);
-                            }}
-                        >
+                        <Button variant={"outline"} size={"icon"}>
                             <Volume2 />
                         </Button>
                     </PopoverTrigger>
@@ -44,10 +38,7 @@ const Volume = (props: Props) => {
                     </PopoverContent>
                 </Popover>
             </HoverCardTrigger>
-            <HoverCardContent
-                className="w-80"
-                hidden={isSliderOpen ? true : false}
-            >
+            <HoverCardContent className="w-80" hidden={isSliderOpen}>
                 <div className="flex flex-col justify-between space-x-4">
                     <strong>Volume Slider 🔊</strong>
                     <p>Adjust the volume level of the notifications.</p>
