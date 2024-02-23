@@ -11,23 +11,30 @@ export const VideoDevicesContext = createContext<VideoDeviceContext | null>(
     null
 );
 
-let webcamList: MediaDeviceInfo[] = [];
-
 const VideoDevicesProvider = (props: Props) => {
     const [webcamId, setWebcamId] = useState<string | undefined>();
+    const [webcamList, setWebcamList] = useState<MediaDeviceInfo[]>([]);
 
     const loadVideoDeviceList = async () => {
         const deviceList: MediaDeviceInfo[] =
             await navigator.mediaDevices.enumerateDevices();
-        webcamList = deviceList.filter((device) => device.kind === VIDEO_INPUT);
+        const webcamList: MediaDeviceInfo[] = deviceList.filter(
+            (device) => device.kind === VIDEO_INPUT
+        );
 
         if (webcamList.length > 0) {
             setWebcamId(webcamList[0].deviceId);
+            setWebcamList(webcamList);
         }
     };
 
     useEffect(() => {
         loadVideoDeviceList();
+        if (navigator) {
+            navigator.mediaDevices.ondevicechange = (event: Event) => {
+                loadVideoDeviceList();
+            };
+        }
     }, []);
 
     return (

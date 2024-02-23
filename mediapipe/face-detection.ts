@@ -2,6 +2,7 @@ import {
     DELEGATE_GPU,
     FACE_DETECTION_MODE,
     FACE_DETECTION_STR,
+    Interface,
     ModelLoadResult,
     RUNNING_MODE_VIDEO,
     RunningMode,
@@ -18,9 +19,18 @@ const FaceDetection = (() => {
     const MODEL_URL: string =
         "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/latest/blaze_face_short_range.tflite";
 
+    const CONFIG_FACE_MIN_DETECTION_CONFIDENCE_VALUE: number = 0;
+    const CONFIG_FACE_MAX_DETECTION_CONFIDENCE_VALUE: number = 1;
+    const CONFIG_FACE_MIN_SUPPRESSION_THRESHOLD_VALUE: number = 0;
+    const CONFIG_FACE_MAX_SUPPRESSION_THRESHOLD_VALUE: number = 1;
+    const CONFIG_FACE_DEFAULT_DETECTION_CONFIDENCE_SLIDER_STEP_VALUE: number = 0.1;
+    const CONFIG_FACE_DEFAULT_SUPPRESSION_THRESHOLD_SLIDER_STEP_VALUE: number = 0.1;
+
     let minDetectionConfidence: number = 0.5;
     let minSuppressionThreshold: number = 0.3;
     let runningMode: RunningMode = RUNNING_MODE_VIDEO;
+    let delegate: Interface = DELEGATE_GPU;
+    let isUpdating: boolean = false;
 
     let faceDetector: FaceDetector | null = null;
 
@@ -59,6 +69,50 @@ const FaceDetection = (() => {
         }
 
         return result;
+    };
+
+    const getConfig = (): FaceDetectorOptions => {
+        const config: FaceDetectorOptions = {
+            baseOptions: {
+                modelAssetPath: MODEL_URL,
+                delegate: delegate,
+            },
+            minDetectionConfidence: minDetectionConfidence,
+            minSuppressionThreshold: minSuppressionThreshold,
+            runningMode: runningMode,
+        };
+
+        return config;
+    };
+
+    const setRunningMode = (mode: RunningMode) => {
+        runningMode = mode;
+    };
+
+    const setMinDetectionConfidence = (min: number) => {
+        minDetectionConfidence = min;
+    };
+
+    const setMinSuppressionThreshold = (min: number) => {
+        minSuppressionThreshold = min;
+    };
+
+    const setInterfaceDelegate = (del: Interface) => {
+        console.log("set interface:", del);
+        delegate = del;
+    };
+
+    const updateModelConfig = async () => {
+        if (faceDetector) {
+            isUpdating = true;
+            console.log("interface:", delegate);
+            await faceDetector.setOptions(getConfig());
+            isUpdating = false;
+        }
+    };
+
+    const isModelUpdating = (): boolean => {
+        return isUpdating;
     };
 
     const detectFace = (video: HTMLVideoElement): FaceDetectorResult | null => {
@@ -116,7 +170,9 @@ const FaceDetection = (() => {
 
                     // Textbox
                     context.beginPath();
-                    const name = `Face #${index}`;
+                    const name = `Face ${(
+                        detected.categories[0].score * 100
+                    ).toFixed(0)}%`;
                     const textSize = context.measureText(name);
                     context.fillStyle = "#FF0F0F";
                     context.globalAlpha = 1;
@@ -169,9 +225,21 @@ const FaceDetection = (() => {
     };
 
     return {
-        initModel: initModel,
-        detectFace: detectFace,
-        drawOnCanvas: drawOnCanvas,
+        CONFIG_FACE_MIN_DETECTION_CONFIDENCE_VALUE,
+        CONFIG_FACE_MAX_DETECTION_CONFIDENCE_VALUE,
+        CONFIG_FACE_MIN_SUPPRESSION_THRESHOLD_VALUE,
+        CONFIG_FACE_MAX_SUPPRESSION_THRESHOLD_VALUE,
+        CONFIG_FACE_DEFAULT_DETECTION_CONFIDENCE_SLIDER_STEP_VALUE,
+        CONFIG_FACE_DEFAULT_SUPPRESSION_THRESHOLD_SLIDER_STEP_VALUE,
+        initModel,
+        getConfig,
+        setInterfaceDelegate,
+        setMinDetectionConfidence,
+        setMinSuppressionThreshold,
+        detectFace,
+        drawOnCanvas,
+        isModelUpdating,
+        updateModelConfig,
     };
 })();
 

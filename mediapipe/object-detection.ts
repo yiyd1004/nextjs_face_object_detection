@@ -1,5 +1,7 @@
+import Drawing3d from "@/lib/Drawing3d";
 import {
     DELEGATE_GPU,
+    Interface,
     ModelLoadResult,
     OBJECT_DETECTION_STR,
     OBJ_DETECTION_MODE,
@@ -13,23 +15,29 @@ import {
     ObjectDetectorOptions,
     ObjectDetectorResult,
 } from "@mediapipe/tasks-vision";
+import * as THREE from "three";
+import { Vector2 } from "three";
+import { Line2 } from "three/addons/lines/Line2.js";
+import { LineGeometry } from "three/addons/lines/LineGeometry.js";
+import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import { RunningMode } from "../utils/definitions";
 
 const ObjectDetection = (() => {
     const MODEL_URL: string =
         "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/latest/efficientdet_lite0.tflite";
 
-    const CONFIG_MIN_RESULT_VALUE: number = 0;
-    const CONFIG_MAX_RESULT_VALUE: number = 10;
-    const CONFIG_MIN_SCORE_VALUE: number = 0;
-    const CONFIG_MAX_SCORE_VALUE: number = 1;
-    const CONFIG_DEFAULT_RESULT_SLIDER_STEP_VALUE: number = 1;
-    const CONFIG_DEFAULT_SCORE_SLIDER_STEP_VALUE: number = 0.1;
+    const CONFIG_OBJECT_MIN_RESULT_VALUE: number = 0;
+    const CONFIG_OBJECT_MAX_RESULT_VALUE: number = 10;
+    const CONFIG_OBJECT_MIN_SCORE_VALUE: number = 0;
+    const CONFIG_OBJECT_MAX_SCORE_VALUE: number = 1;
+    const CONFIG_OBJECT_DEFAULT_RESULT_SLIDER_STEP_VALUE: number = 1;
+    const CONFIG_OBJECT_DEFAULT_SCORE_SLIDER_STEP_VALUE: number = 0.1;
 
     let displayNamesLocale: string = "en";
     let maxResults: number = 5;
     let scoreThreshold: number = 0.5;
     let runningMode: RunningMode = RUNNING_MODE_VIDEO;
+    let delegate: Interface = DELEGATE_GPU;
 
     let objectDetector: ObjectDetector | null = null;
     let isUpdating: boolean = false;
@@ -67,7 +75,7 @@ const ObjectDetection = (() => {
         const config: ObjectDetectorOptions = {
             baseOptions: {
                 modelAssetPath: MODEL_URL,
-                delegate: DELEGATE_GPU,
+                delegate: delegate,
             },
             displayNamesLocale: displayNamesLocale,
             maxResults: maxResults,
@@ -90,9 +98,14 @@ const ObjectDetection = (() => {
         scoreThreshold = score;
     };
 
+    const setInterfaceDelegate = (del: Interface) => {
+        delegate = del;
+    };
+
     const updateModelConfig = async () => {
         if (objectDetector) {
             isUpdating = true;
+            console.log("interface:", delegate);
             await objectDetector.setOptions(getConfig());
             isUpdating = false;
         }
@@ -122,14 +135,17 @@ const ObjectDetection = (() => {
         return null;
     };
 
-    const drawOnCanvas = (
+    const draw = (
         mirrored: boolean,
         detections: Detection[] | null | undefined,
-        context: CanvasRenderingContext2D | null | undefined
+        width: number,
+        height: number
     ) => {
         if (detections) {
+            Drawing3d.clearScene();
+            const objGroup = new THREE.Object3D();
             detections.forEach((detected: Detection) => {
-                if (context && detected.boundingBox) {
+                if (detected.boundingBox) {
                     const box: BoundingBox = detected.boundingBox;
                     const category: Category = detected.categories.reduce(
                         (maxScoreCat, current) => {
@@ -141,108 +157,132 @@ const ObjectDetection = (() => {
                         }
                     );
 
-                    context.beginPath();
+                    let points: Vector2[] = [];
 
-                    // box
-                    context.font = "12px Courier New";
-                    context.strokeStyle =
-                        category.categoryName === "person"
-                            ? "#FF0F0F"
-                            : "#00B612";
-                    context.lineWidth = 4;
-                    context.globalAlpha = 1;
+                    if (mirrored) {
+                        points.push(
+                            new THREE.Vector2(
+                                Drawing3d.getCameraRight() - box.originX,
+                                Drawing3d.getCameraTop() - box.originY
+                            )
+                        );
+                        points.push(
+                            new THREE.Vector2(
+                                Drawing3d.getCameraRight() -
+                                    box.originX -
+                                    box.width,
+                                Drawing3d.getCameraTop() - box.originY
+                            )
+                        );
+                        points.push(
+                            new THREE.Vector2(
+                                Drawing3d.getCameraRight() -
+                                    box.originX -
+                                    box.width,
+                                Drawing3d.getCameraTop() -
+                                    box.originY -
+                                    box.height
+                            )
+                        );
+                        points.push(
+                            new THREE.Vector2(
+                                Drawing3d.getCameraRight() - box.originX,
+                                Drawing3d.getCameraTop() -
+                                    box.originY -
+                                    box.height
+                            )
+                        );
+                    } else {
+                        points.push(
+                            new THREE.Vector2(
+                                Drawing3d.getCameraLeft() + box.originX,
+                                Drawing3d.getCameraTop() - box.originY
+                            )
+                        );
+                        points.push(
+                            new THREE.Vector2(
+                                Drawing3d.getCameraLeft() +
+                                    box.originX +
+                                    box.width,
+                                Drawing3d.getCameraTop() - box.originY
+                            )
+                        );
+                        points.push(
+                            new THREE.Vector2(
+                                Drawing3d.getCameraLeft() +
+                                    box.originX +
+                                    box.width,
+                                Drawing3d.getCameraTop() -
+                                    box.originY -
+                                    box.height
+                            )
+                        );
+                        points.push(
+                            new THREE.Vector2(
+                                Drawing3d.getCameraLeft() + box.originX,
+                                Drawing3d.getCameraTop() -
+                                    box.originY -
+                                    box.height
+                            )
+                        );
+                    }
+                    const bufferGeo = new THREE.BufferGeometry().setFromPoints(
+                        points
+                    );
+                    bufferGeo.setIndex([0, 1, 2, 3, 0]);
 
-                    mirrored
-                        ? context.roundRect(
-                              context.canvas.width - box.originX,
-                              box.originY,
-                              -box.width,
-                              box.height
-                          )
-                        : context.roundRect(
-                              box.originX,
-                              box.originY,
-                              box.width,
-                              box.height
-                          );
+                    const unindexd = bufferGeo.toNonIndexed();
+                    const geo = new LineGeometry().setPositions(
+                        unindexd.getAttribute("position").array as Float32Array
+                    );
+                    const material = new LineMaterial({
+                        color:
+                            category.categoryName === "person"
+                                ? "#FF0F0F"
+                                : "#00B612",
+                        linewidth: 0.008,
+                    });
 
-                    context.stroke();
+                    const line = new Line2(geo, material);
+                    objGroup.add(line);
 
-                    // Textbox
-                    context.beginPath();
-                    const name = `${category.categoryName}`;
-                    const textSize = context.measureText(name);
-                    context.fillStyle =
-                        category.categoryName === "person"
-                            ? "#FF0F0F"
-                            : "#00B612";
-                    context.globalAlpha = 1;
+                    // Add text
+                    const label = Drawing3d.createLabel(
+                        category.categoryName,
+                        category.score,
+                        width,
+                        height,
+                        mirrored,
+                        box
+                    );
 
-                    mirrored
-                        ? context.roundRect(
-                              context.canvas.width -
-                                  box.originX -
-                                  box.width -
-                                  2,
-                              box.originY - 20,
-                              textSize.width + 8,
-                              textSize.fontBoundingBoxAscent +
-                                  textSize.fontBoundingBoxDescent +
-                                  8
-                          )
-                        : context.roundRect(
-                              box.originX - 2,
-                              box.originY - 20,
-                              textSize.width + 8,
-                              textSize.fontBoundingBoxAscent +
-                                  textSize.fontBoundingBoxDescent +
-                                  8
-                          );
-                    context.fill();
-
-                    // text
-                    context.beginPath();
-                    context.font = "12px Courier New";
-                    context.fillStyle = "white";
-                    context.globalAlpha = 1;
-
-                    mirrored
-                        ? context.fillText(
-                              name,
-                              context.canvas.width -
-                                  box.originX -
-                                  box.width +
-                                  2,
-                              box.originY - 7
-                          )
-                        : context.fillText(
-                              name,
-                              box.originX + 2,
-                              box.originY - 7
-                          );
+                    if (label) {
+                        objGroup.add(label);
+                    }
                 }
             });
+            Drawing3d.addToScene(objGroup);
+            Drawing3d.render();
         }
     };
 
     return {
-        CONFIG_MIN_RESULT_VALUE: CONFIG_MIN_RESULT_VALUE,
-        CONFIG_MAX_RESULT_VALUE: CONFIG_MAX_RESULT_VALUE,
-        CONFIG_MIN_SCORE_VALUE: CONFIG_MIN_SCORE_VALUE,
-        CONFIG_MAX_SCORE_VALUE: CONFIG_MAX_SCORE_VALUE,
-        CONFIG_DEFAULT_RESULT_SLIDER_STEP_VALUE:
-            CONFIG_DEFAULT_RESULT_SLIDER_STEP_VALUE,
-        CONFIG_DEFAULT_SCORE_SLIDER_STEP_VALUE:
-            CONFIG_DEFAULT_SCORE_SLIDER_STEP_VALUE,
-        initModel: initModel,
-        detectObject: detectObject,
-        drawOnCanvas: drawOnCanvas,
-        getConfig: getConfig,
-        setMaxResults: setMaxResults,
-        setScoreThreshold: setScoreThreshold,
-        setRunningMode: setRunningMode,
-        updateModelConfig: updateModelConfig,
-        isModelUpdating: isModelUpdating,
+        CONFIG_OBJECT_MIN_RESULT_VALUE,
+        CONFIG_OBJECT_MAX_RESULT_VALUE,
+        CONFIG_OBJECT_MIN_SCORE_VALUE,
+        CONFIG_OBJECT_MAX_SCORE_VALUE,
+        CONFIG_OBJECT_DEFAULT_RESULT_SLIDER_STEP_VALUE,
+        CONFIG_OBJECT_DEFAULT_SCORE_SLIDER_STEP_VALUE,
+        initModel,
+        detectObject,
+        draw,
+        getConfig,
+        setInterfaceDelegate,
+        setMaxResults,
+        setScoreThreshold,
+        setRunningMode,
+        updateModelConfig,
+        isModelUpdating,
     };
 })();
 

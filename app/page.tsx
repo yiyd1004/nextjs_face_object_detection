@@ -11,6 +11,7 @@ import ScreenShot from "@/components/ScreenShot";
 import Volume from "@/components/Volume";
 import ModelSetting from "@/components/model-settings/ModelSetting";
 import { Separator } from "@/components/ui/separator";
+import Drawing3d from "@/lib/Drawing3d";
 import FaceDetection from "@/mediapipe/face-detection";
 import GestureRecognition from "@/mediapipe/gesture-recognition";
 import initMediaPipVision from "@/mediapipe/mediapipe-vision";
@@ -40,7 +41,7 @@ const Home = (props: Props) => {
     const videoDeviceProvider = useContext(VideoDevicesContext);
 
     const webcamRef = useRef<Webcam>(null);
-    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const canvas3dRef = useRef<HTMLCanvasElement>(null);
 
     const [mirrored, setMirrored] = useState<boolean>(false);
     const [isRecording, setRecording] = useState<boolean>(false);
@@ -120,41 +121,96 @@ const Home = (props: Props) => {
                 );
 
                 if (objPredictions?.detections) {
-                    resizeCanvas(canvasRef, webcamRef);
-                    ObjectDetection.drawOnCanvas(
-                        mirrored,
-                        objPredictions.detections,
-                        canvasRef.current?.getContext("2d")
-                    );
+                    //resizeCanvas(canvas3dRef, webcamRef);
+                    const canvas = canvas3dRef.current;
+                    const video = webcamRef.current?.video;
+
+                    if (canvas && video) {
+                        const { videoWidth, videoHeight } = video;
+                        Drawing3d.resizeCamera(videoWidth, videoHeight);
+
+                        ObjectDetection.draw(
+                            mirrored,
+                            objPredictions.detections,
+                            videoWidth,
+                            videoHeight
+                        );
+                    }
                 }
-            } else if (currentMode === FACE_DETECTION_MODE) {
+            } else if (
+                currentMode === FACE_DETECTION_MODE &&
+                !FaceDetection.isModelUpdating()
+            ) {
                 const facePredictions = FaceDetection.detectFace(
                     webcamRef.current.video
                 );
 
                 if (facePredictions?.detections) {
-                    resizeCanvas(canvasRef, webcamRef);
-                    FaceDetection.drawOnCanvas(
-                        mirrored,
-                        facePredictions.detections,
-                        canvasRef.current?.getContext("2d")
-                    );
+                    const canvas = canvas3dRef.current;
+                    const video = webcamRef.current?.video;
+
+                    if (canvas && video) {
+                        const { videoWidth, videoHeight } = video;
+                        Drawing3d.resizeCamera(videoWidth, videoHeight);
+                        // FaceDetection.drawOnCanvas(
+                        //     mirrored,
+                        //     facePredictions.detections,
+                        //     canvas2dRef.current?.getContext("2d")
+                        // );
+                    }
                 }
-            } else if (currentMode === GESTURE_RECOGNITION_MODE) {
+            } else if (
+                currentMode === GESTURE_RECOGNITION_MODE &&
+                !GestureRecognition.isModelUpdating()
+            ) {
                 const gesturePrediction = GestureRecognition.detectGesture(
                     webcamRef.current.video
                 );
-                console.log(gesturePrediction);
+                // console.log("why");
+                // if (gesturePrediction?.gestures) {
+                // resizeCanvas(canvas3dRef, webcamRef);
+                // console.log(
+                //     Drawing3d.isSceneInitialized(),
+                //     Drawing3d.isRendererInitialized()
+                // );
+                // Drawing3d.test();
+                // Drawing3d.render();
+                // }
             }
         }
     };
 
     const onModeChange = (mode: string) => {
-        setCurrentMode(parseInt(mode));
+        const newMode: number = parseInt(mode);
+
+        setCurrentMode(newMode);
+        console.log(canvas3dRef);
+        if (newMode === GESTURE_RECOGNITION_MODE) {
+            console.log(canvas3dRef.current);
+            if (webcamRef.current?.video) {
+                if (canvas3dRef.current && !Drawing3d.isRendererInitialized()) {
+                    Drawing3d.initRenderer(canvas3dRef.current);
+                }
+                Drawing3d.test2();
+                Drawing3d.resizeCamera(
+                    webcamRef.current?.video.videoWidth,
+                    webcamRef.current?.video.videoHeight
+                );
+            }
+        } else {
+            //setUse3d(false);
+        }
     };
 
     useEffect(() => {
+        if (canvas3dRef.current && !Drawing3d.isRendererInitialized()) {
+            Drawing3d.initRenderer(canvas3dRef.current);
+        }
+    }, [canvas3dRef.current]);
+
+    useEffect(() => {
         setLoading(true);
+        Drawing3d.initScene(window.innerWidth, window.innerHeight);
         initModels();
     }, []);
 
@@ -188,7 +244,8 @@ const Home = (props: Props) => {
                                 }}
                             />
                             <canvas
-                                ref={canvasRef}
+                                id="3d canvas"
+                                ref={canvas3dRef}
                                 className="absolute top-0 left-0 h-full w-full object-contain"
                             ></canvas>
                         </>

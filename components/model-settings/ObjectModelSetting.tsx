@@ -23,10 +23,10 @@ const ObjectModelSetting = (props: Props) => {
                 </span>
                 <div className="flex w-full pb-1">
                     <Slider
-                        min={ObjectDetection.CONFIG_MIN_RESULT_VALUE}
-                        max={ObjectDetection.CONFIG_MAX_RESULT_VALUE}
+                        min={ObjectDetection.CONFIG_OBJECT_MIN_RESULT_VALUE}
+                        max={ObjectDetection.CONFIG_OBJECT_MAX_RESULT_VALUE}
                         step={
-                            ObjectDetection.CONFIG_DEFAULT_RESULT_SLIDER_STEP_VALUE
+                            ObjectDetection.CONFIG_OBJECT_DEFAULT_RESULT_SLIDER_STEP_VALUE
                         }
                         defaultValue={[maxResults]}
                         onValueChange={(vals: number[]) => {
@@ -36,8 +36,12 @@ const ObjectModelSetting = (props: Props) => {
                     />
                 </div>
                 <div className="flex w-full justify-between pt-1">
-                    <span>{ObjectDetection.CONFIG_MIN_RESULT_VALUE}</span>
-                    <span>{ObjectDetection.CONFIG_MAX_RESULT_VALUE}</span>
+                    <span>
+                        {ObjectDetection.CONFIG_OBJECT_MIN_RESULT_VALUE}
+                    </span>
+                    <span>
+                        {ObjectDetection.CONFIG_OBJECT_MAX_RESULT_VALUE}
+                    </span>
                 </div>
             </div>
 
@@ -47,10 +51,10 @@ const ObjectModelSetting = (props: Props) => {
                 </span>
                 <div className="flex w-full">
                     <Slider
-                        min={ObjectDetection.CONFIG_MIN_SCORE_VALUE}
-                        max={ObjectDetection.CONFIG_MAX_SCORE_VALUE}
+                        min={ObjectDetection.CONFIG_OBJECT_MIN_SCORE_VALUE}
+                        max={ObjectDetection.CONFIG_OBJECT_MAX_SCORE_VALUE}
                         step={
-                            ObjectDetection.CONFIG_DEFAULT_SCORE_SLIDER_STEP_VALUE
+                            ObjectDetection.CONFIG_OBJECT_DEFAULT_SCORE_SLIDER_STEP_VALUE
                         }
                         defaultValue={[scoreThreshold]}
                         onValueChange={(vals: number[]) => {
@@ -61,10 +65,10 @@ const ObjectModelSetting = (props: Props) => {
                 </div>
                 <div className="flex w-full justify-between pt-1">
                     <span>{`${
-                        ObjectDetection.CONFIG_MIN_SCORE_VALUE * 100
+                        ObjectDetection.CONFIG_OBJECT_MIN_SCORE_VALUE * 100
                     }%`}</span>
                     <span>{`${
-                        ObjectDetection.CONFIG_MAX_SCORE_VALUE * 100
+                        ObjectDetection.CONFIG_OBJECT_MAX_SCORE_VALUE * 100
                     }%`}</span>
                 </div>
             </div>

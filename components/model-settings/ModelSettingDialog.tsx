@@ -1,5 +1,6 @@
+import FaceDetection from "@/mediapipe/face-detection";
 import ObjectDetection from "@/mediapipe/object-detection";
-import { OBJ_DETECTION_MODE } from "@/utils/definitions";
+import { FACE_DETECTION_MODE, OBJ_DETECTION_MODE } from "@/utils/definitions";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { Settings } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
@@ -14,6 +15,8 @@ import {
     DialogTrigger,
 } from "../ui/dialog";
 import CameraSelect from "./CameraSelect";
+import FaceModelSetting from "./FaceModelSetting";
+import InterfaceDelegate from "./InterfaceDelegate";
 import ObjectModelSetting from "./ObjectModelSetting";
 
 type Props = {
@@ -27,8 +30,13 @@ const ModelSettingDialog = (props: Props) => {
     };
 
     const updateModel = () => {
-        if (props.mode === OBJ_DETECTION_MODE) {
-            ObjectDetection.updateModelConfig();
+        switch (props.mode) {
+            case OBJ_DETECTION_MODE:
+                ObjectDetection.updateModelConfig();
+                break;
+            case FACE_DETECTION_MODE:
+                FaceDetection.updateModelConfig();
+                break;
         }
     };
 
@@ -49,9 +57,14 @@ const ModelSettingDialog = (props: Props) => {
                         <span className="text-left">Camera:</span>
                         <CameraSelect />
                     </div>
+                    <div className="flex w-full items-center gap-4 pb-4">
+                        <span className="text-left">Inference delegate:</span>
+                        <InterfaceDelegate mode={props.mode} />
+                    </div>
                     {props.mode === OBJ_DETECTION_MODE && (
                         <ObjectModelSetting />
                     )}
+                    {props.mode === FACE_DETECTION_MODE && <FaceModelSetting />}
                 </div>
                 <DialogFooter>
                     <DialogClose asChild>

@@ -34,6 +34,8 @@ const GestureRecognition = (() => {
     let customGestureMaxResults: number = -1;
     let customGestureScoreThreshold: number = 0;
 
+    let isUpdating: boolean = false;
+
     let gestureRecognizer: GestureRecognizer;
 
     const initModel = async (vision: any): Promise<ModelLoadResult> => {
@@ -84,6 +86,10 @@ const GestureRecognition = (() => {
         return result;
     };
 
+    const isModelUpdating = (): boolean => {
+        return isUpdating;
+    };
+
     const detectGesture = (
         video: HTMLVideoElement
     ): GestureRecognizerResult | null => {
@@ -106,8 +112,9 @@ const GestureRecognition = (() => {
     };
 
     return {
-        initModel: initModel,
-        detectGesture: detectGesture,
+        initModel,
+        detectGesture,
+        isModelUpdating,
     };
 })();
 
