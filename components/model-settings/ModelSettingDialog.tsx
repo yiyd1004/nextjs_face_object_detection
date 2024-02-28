@@ -1,6 +1,10 @@
 import FaceDetection from "@/mediapipe/face-detection";
 import ObjectDetection from "@/mediapipe/object-detection";
-import { FACE_DETECTION_MODE, OBJ_DETECTION_MODE } from "@/utils/definitions";
+import {
+    CAMERA_LOAD_STATUS_SUCCESS,
+    FACE_DETECTION_MODE,
+    OBJ_DETECTION_MODE,
+} from "@/utils/definitions";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { Settings } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
@@ -20,6 +24,7 @@ import InterfaceDelegate from "./InterfaceDelegate";
 import ObjectModelSetting from "./ObjectModelSetting";
 
 type Props = {
+    cameraStatus: number | undefined;
     mode: number;
     setDialogOpen: Dispatch<SetStateAction<boolean>>;
 };
@@ -43,7 +48,11 @@ const ModelSettingDialog = (props: Props) => {
     return (
         <Dialog onOpenChange={onOpenChange}>
             <DialogTrigger asChild>
-                <Button variant={"outline"} size={"icon"}>
+                <Button
+                    variant={"outline"}
+                    size={"icon"}
+                    disabled={props.cameraStatus !== CAMERA_LOAD_STATUS_SUCCESS}
+                >
                     <Settings />
                 </Button>
             </DialogTrigger>

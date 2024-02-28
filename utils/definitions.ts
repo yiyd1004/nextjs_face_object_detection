@@ -6,7 +6,7 @@ export const GESTURE_RECOGNITION_MODE: number = 2;
 export const CONFIG_SLIDER_STEP: number = 0.2;
 
 export const VISION_URL: string =
-    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm";
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.10/wasm";
 
 export type Interface = "CPU" | "GPU";
 export const DELEGATE_GPU: Interface = "GPU";
@@ -28,8 +28,23 @@ export type ModelLoadResult = {
     loadResult: boolean;
 };
 
-export type VideoDeviceContext = {
+export const CAMERA_LOAD_STATUS_SUCCESS = 1;
+export const CAMERA_LOAD_STATUS_ERROR = 2;
+export const CAMERA_LOAD_STATUS_NO_DEVICES = 3;
+export type CameraDeviceStatus = {
+    status: number | undefined;
+    errorMsg: string | undefined;
+    errorName: string | undefined;
+};
+
+export type CameraDeviceContext = {
+    status: CameraDeviceStatus;
     webcamList: MediaDeviceInfo[];
     webcamId: string | undefined;
     setWebcamId: React.Dispatch<React.SetStateAction<string | undefined>>;
 };
+
+export const ERROR_ENABLE_CAMERA_PERMISSION_MSG =
+    "Please Enable Camera Permission";
+export const ERROR_NO_CAMERA_DEVICE_AVAILABLE_MSG =
+    "No Camera Device Available";

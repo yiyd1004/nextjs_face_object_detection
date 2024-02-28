@@ -7,6 +7,7 @@ import {
 import ModelSettingDialog from "./ModelSettingDialog";
 
 type Props = {
+    cameraStatus: number | undefined;
     mode: number;
 };
 
@@ -19,6 +20,7 @@ const ModelSetting = (props: Props) => {
                 <ModelSettingDialog
                     mode={props.mode}
                     setDialogOpen={setDialogOpen}
+                    cameraStatus={props.cameraStatus}
                 />
             </HoverCardTrigger>
             <HoverCardContent className="w-80" hidden={isDialogOpen}>

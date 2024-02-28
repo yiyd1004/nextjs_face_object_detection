@@ -1,6 +1,6 @@
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-import VideoDevicesProvider from "@/providers/VideoDevicesProvider";
+import CameraDevicesProvider from "@/providers/CameraDevicesProvider";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
@@ -21,7 +21,7 @@ export default function RootLayout({
         <html lang="en">
             <body className={inter.className}>
                 <ThemeProvider attribute="class" defaultTheme="system">
-                    <VideoDevicesProvider>{children}</VideoDevicesProvider>
+                    <CameraDevicesProvider>{children}</CameraDevicesProvider>
                     <Toaster />
                 </ThemeProvider>
             </body>

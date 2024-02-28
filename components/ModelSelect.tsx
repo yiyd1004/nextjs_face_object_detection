@@ -1,4 +1,7 @@
-import { ModelLoadResult } from "@/utils/definitions";
+import {
+    CAMERA_LOAD_STATUS_SUCCESS,
+    ModelLoadResult,
+} from "@/utils/definitions";
 import {
     Select,
     SelectContent,
@@ -8,6 +11,7 @@ import {
 } from "./ui/select";
 
 type Props = {
+    cameraStatus: number | undefined;
     modelList: ModelLoadResult[] | undefined;
     currentMode: string;
     onModeChange: ((value: string) => void) | undefined;
@@ -15,7 +19,11 @@ type Props = {
 
 const ModelSelect = (props: Props) => {
     return (
-        <Select value={props.currentMode} onValueChange={props.onModeChange}>
+        <Select
+            value={props.currentMode}
+            onValueChange={props.onModeChange}
+            disabled={props.cameraStatus !== CAMERA_LOAD_STATUS_SUCCESS}
+        >
             <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Theme" />
             </SelectTrigger>

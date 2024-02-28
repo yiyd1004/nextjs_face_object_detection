@@ -1,3 +1,4 @@
+import Drawing3d from "@/lib/Drawing3d";
 import {
     DELEGATE_GPU,
     FACE_DETECTION_MODE,
@@ -14,6 +15,11 @@ import {
     FaceDetectorOptions,
     FaceDetectorResult,
 } from "@mediapipe/tasks-vision";
+import * as THREE from "three";
+import { Vector2 } from "three";
+import { Line2 } from "three/examples/jsm/lines/Line2.js";
+import { LineGeometry } from "three/examples/jsm/lines/LineGeometry.js";
+import { LineMaterial } from "three/examples/jsm/lines/LineMaterial.js";
 
 const FaceDetection = (() => {
     const MODEL_URL: string =
@@ -134,93 +140,120 @@ const FaceDetection = (() => {
         return null;
     };
 
-    const drawOnCanvas = (
+    const draw = (
         mirrored: boolean,
         detections: Detection[] | null | undefined,
-        context: CanvasRenderingContext2D | null | undefined
+        width: number,
+        height: number
     ) => {
         if (detections) {
-            detections.forEach((detected: Detection, index: number) => {
-                if (context && detected.boundingBox) {
+            Drawing3d.clearScene();
+            const objGroup = new THREE.Object3D();
+            detections.forEach((detected: Detection) => {
+                if (detected.boundingBox) {
                     const box: BoundingBox = detected.boundingBox;
 
-                    context.beginPath();
+                    const points: Vector2[] = [];
 
-                    // box
-                    context.font = "12px Courier New";
-                    context.strokeStyle = "#FF0F0F";
-                    context.lineWidth = 4;
-                    context.globalAlpha = 1;
+                    const cameraPos = Drawing3d.getCameraPosition();
+                    if (!cameraPos) {
+                        return;
+                    }
 
-                    mirrored
-                        ? context.roundRect(
-                              context.canvas.width - box.originX,
-                              box.originY,
-                              -box.width,
-                              box.height
-                          )
-                        : context.roundRect(
-                              box.originX,
-                              box.originY,
-                              box.width,
-                              box.height
-                          );
+                    const rightPoint = cameraPos.x + width / 2;
+                    const leftPoint = -rightPoint;
+                    const topPoint = cameraPos.y + height / 2;
 
-                    context.stroke();
+                    if (mirrored) {
+                        points.push(
+                            new THREE.Vector2(
+                                rightPoint - box.originX,
+                                topPoint - box.originY
+                            )
+                        );
+                        points.push(
+                            new THREE.Vector2(
+                                rightPoint - box.originX - box.width,
+                                topPoint - box.originY
+                            )
+                        );
+                        points.push(
+                            new THREE.Vector2(
+                                rightPoint - box.originX - box.width,
+                                topPoint - box.originY - box.height
+                            )
+                        );
+                        points.push(
+                            new THREE.Vector2(
+                                rightPoint - box.originX,
+                                topPoint - box.originY - box.height
+                            )
+                        );
+                    } else {
+                        points.push(
+                            new THREE.Vector2(
+                                leftPoint + box.originX,
+                                topPoint - box.originY
+                            )
+                        );
+                        points.push(
+                            new THREE.Vector2(
+                                leftPoint + box.originX + box.width,
+                                topPoint - box.originY
+                            )
+                        );
+                        points.push(
+                            new THREE.Vector2(
+                                leftPoint + box.originX + box.width,
+                                topPoint - box.originY - box.height
+                            )
+                        );
+                        points.push(
+                            new THREE.Vector2(
+                                leftPoint + box.originX,
+                                topPoint - box.originY - box.height
+                            )
+                        );
+                    }
+                    const bufferGeo = new THREE.BufferGeometry().setFromPoints(
+                        points
+                    );
+                    bufferGeo.setIndex([0, 1, 2, 3, 0]);
 
-                    // Textbox
-                    context.beginPath();
-                    const name = `Face ${(
-                        detected.categories[0].score * 100
-                    ).toFixed(0)}%`;
-                    const textSize = context.measureText(name);
-                    context.fillStyle = "#FF0F0F";
-                    context.globalAlpha = 1;
+                    const unindexd = bufferGeo.toNonIndexed();
+                    const geo = new LineGeometry().setPositions(
+                        unindexd.getAttribute("position").array as Float32Array
+                    );
+                    const material = new LineMaterial({
+                        color: "#FF0F0F",
+                        linewidth: 0.008,
+                    });
 
-                    mirrored
-                        ? context.roundRect(
-                              context.canvas.width -
-                                  box.originX -
-                                  box.width -
-                                  2,
-                              box.originY - 20,
-                              textSize.width + 8,
-                              textSize.fontBoundingBoxAscent +
-                                  textSize.fontBoundingBoxDescent +
-                                  8
-                          )
-                        : context.roundRect(
-                              box.originX - 2,
-                              box.originY - 20,
-                              textSize.width + 8,
-                              textSize.fontBoundingBoxAscent +
-                                  textSize.fontBoundingBoxDescent +
-                                  8
-                          );
-                    context.fill();
+                    const line = new Line2(geo, material);
+                    objGroup.add(line);
 
-                    // text
-                    context.beginPath();
-                    context.font = "12px Courier New";
-                    context.fillStyle = "white";
-                    context.globalAlpha = 1;
+                    // Add text
+                    const label = Drawing3d.createLabel(
+                        "Face",
+                        detected.categories[0].score,
+                        "#FF0F0F",
+                        width,
+                        height,
+                        mirrored,
+                        box
+                    );
 
-                    mirrored
-                        ? context.fillText(
-                              name,
-                              context.canvas.width -
-                                  box.originX -
-                                  box.width +
-                                  2,
-                              box.originY - 7
-                          )
-                        : context.fillText(
-                              name,
-                              box.originX + 2,
-                              box.originY - 7
-                          );
+                    if (label) {
+                        objGroup.add(label);
+                    }
                 }
             });
+
+            const dist = Drawing3d.calculateDistance(height);
+            objGroup.position.z = dist;
+
+            Drawing3d.addToScene(objGroup);
+            Drawing3d.render();
         }
     };
 
@@ -236,8 +269,8 @@ const FaceDetection = (() => {
         setInterfaceDelegate,
         setMinDetectionConfidence,
         setMinSuppressionThreshold,
+        draw,
         detectFace,
-        drawOnCanvas,
         isModelUpdating,
         updateModelConfig,
     };

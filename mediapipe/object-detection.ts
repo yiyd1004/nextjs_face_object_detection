@@ -157,72 +157,65 @@ const ObjectDetection = (() => {
                         }
                     );
 
-                    let points: Vector2[] = [];
+                    const points: Vector2[] = [];
+
+                    const cameraPos = Drawing3d.getCameraPosition();
+                    if (!cameraPos) {
+                        return;
+                    }
+
+                    const rightPoint = cameraPos.x + width / 2;
+                    const leftPoint = -rightPoint;
+                    const topPoint = cameraPos.y + height / 2;
 
                     if (mirrored) {
                         points.push(
                             new THREE.Vector2(
-                                Drawing3d.getCameraRight() - box.originX,
-                                Drawing3d.getCameraTop() - box.originY
+                                rightPoint - box.originX,
+                                topPoint - box.originY
                             )
                         );
                         points.push(
                             new THREE.Vector2(
-                                Drawing3d.getCameraRight() -
-                                    box.originX -
-                                    box.width,
-                                Drawing3d.getCameraTop() - box.originY
+                                rightPoint - box.originX - box.width,
+                                topPoint - box.originY
                             )
                         );
                         points.push(
                             new THREE.Vector2(
-                                Drawing3d.getCameraRight() -
-                                    box.originX -
-                                    box.width,
-                                Drawing3d.getCameraTop() -
-                                    box.originY -
-                                    box.height
+                                rightPoint - box.originX - box.width,
+                                topPoint - box.originY - box.height
                             )
                         );
                         points.push(
                             new THREE.Vector2(
-                                Drawing3d.getCameraRight() - box.originX,
-                                Drawing3d.getCameraTop() -
-                                    box.originY -
-                                    box.height
+                                rightPoint - box.originX,
+                                topPoint - box.originY - box.height
                             )
                         );
                     } else {
                         points.push(
                             new THREE.Vector2(
-                                Drawing3d.getCameraLeft() + box.originX,
-                                Drawing3d.getCameraTop() - box.originY
+                                leftPoint + box.originX,
+                                topPoint - box.originY
                             )
                         );
                         points.push(
                             new THREE.Vector2(
-                                Drawing3d.getCameraLeft() +
-                                    box.originX +
-                                    box.width,
-                                Drawing3d.getCameraTop() - box.originY
+                                leftPoint + box.originX + box.width,
+                                topPoint - box.originY
                             )
                         );
                         points.push(
                             new THREE.Vector2(
-                                Drawing3d.getCameraLeft() +
-                                    box.originX +
-                                    box.width,
-                                Drawing3d.getCameraTop() -
-                                    box.originY -
-                                    box.height
+                                leftPoint + box.originX + box.width,
+                                topPoint - box.originY - box.height
                             )
                         );
                         points.push(
                             new THREE.Vector2(
-                                Drawing3d.getCameraLeft() + box.originX,
-                                Drawing3d.getCameraTop() -
-                                    box.originY -
-                                    box.height
+                                leftPoint + box.originX,
+                                topPoint - box.originY - box.height
                             )
                         );
                     }
@@ -236,20 +229,23 @@ const ObjectDetection = (() => {
                         unindexd.getAttribute("position").array as Float32Array
                     );
                     const material = new LineMaterial({
-                        color:
-                            category.categoryName === "person"
-                                ? "#FF0F0F"
-                                : "#00B612",
                         linewidth: 0.008,
                     });
+                    material.color.set(
+                        category.categoryName === "person" ? 0xff0f0f : 0x00b612
+                    );
 
                     const line = new Line2(geo, material);
+
                     objGroup.add(line);
 
                     // Add text
                     const label = Drawing3d.createLabel(
                         category.categoryName,
                         category.score,
+                        category.categoryName === "person"
+                            ? "#FF0F0F"
+                            : "#00B612",
                         width,
                         height,
                         mirrored,
@@ -261,6 +257,10 @@ const ObjectDetection = (() => {
                     }
                 }
             });
+
+            const dist = Drawing3d.calculateDistance(height);
+            objGroup.position.z = dist;
+
             Drawing3d.addToScene(objGroup);
             Drawing3d.render();
         }

@@ -16,9 +16,14 @@ import FaceDetection from "@/mediapipe/face-detection";
 import GestureRecognition from "@/mediapipe/gesture-recognition";
 import initMediaPipVision from "@/mediapipe/mediapipe-vision";
 import ObjectDetection from "@/mediapipe/object-detection";
-import { VideoDevicesContext } from "@/providers/VideoDevicesProvider";
+import { CameraDevicesContext } from "@/providers/CameraDevicesProvider";
 import { beep } from "@/utils/audio";
 import {
+    CAMERA_LOAD_STATUS_ERROR,
+    CAMERA_LOAD_STATUS_NO_DEVICES,
+    CAMERA_LOAD_STATUS_SUCCESS,
+    ERROR_ENABLE_CAMERA_PERMISSION_MSG,
+    ERROR_NO_CAMERA_DEVICE_AVAILABLE_MSG,
     FACE_DETECTION_MODE,
     GESTURE_RECOGNITION_MODE,
     ModelLoadResult,
@@ -38,7 +43,7 @@ let interval: any = null;
 let stopTimeout: any = null;
 
 const Home = (props: Props) => {
-    const videoDeviceProvider = useContext(VideoDevicesContext);
+    const cameraDeviceProvider = useContext(CameraDevicesContext);
 
     const webcamRef = useRef<Webcam>(null);
     const canvas3dRef = useRef<HTMLCanvasElement>(null);
@@ -51,7 +56,6 @@ const Home = (props: Props) => {
     const [modelLoadResult, setModelLoadResult] = useState<ModelLoadResult[]>();
     const [loading, setLoading] = useState(false);
     const [currentMode, setCurrentMode] = useState<number>(NO_MODE);
-    const [enableWebcam, setEnableWebcam] = useState<boolean>(true);
 
     const takeScreenShot = () => {};
     const recordVideo = () => {
@@ -121,7 +125,6 @@ const Home = (props: Props) => {
                 );
 
                 if (objPredictions?.detections) {
-                    //resizeCanvas(canvas3dRef, webcamRef);
                     const canvas = canvas3dRef.current;
                     const video = webcamRef.current?.video;
 
@@ -152,11 +155,12 @@ const Home = (props: Props) => {
                     if (canvas && video) {
                         const { videoWidth, videoHeight } = video;
                         Drawing3d.resizeCamera(videoWidth, videoHeight);
-                        // FaceDetection.drawOnCanvas(
-                        //     mirrored,
-                        //     facePredictions.detections,
-                        //     canvas2dRef.current?.getContext("2d")
-                        // );
+                        FaceDetection.draw(
+                            mirrored,
+                            facePredictions.detections,
+                            videoWidth,
+                            videoHeight
+                        );
                     }
                 }
             } else if (
@@ -166,16 +170,25 @@ const Home = (props: Props) => {
                 const gesturePrediction = GestureRecognition.detectGesture(
                     webcamRef.current.video
                 );
-                // console.log("why");
-                // if (gesturePrediction?.gestures) {
-                // resizeCanvas(canvas3dRef, webcamRef);
-                // console.log(
-                //     Drawing3d.isSceneInitialized(),
-                //     Drawing3d.isRendererInitialized()
-                // );
-                // Drawing3d.test();
-                // Drawing3d.render();
-                // }
+
+                if (gesturePrediction?.gestures) {
+                    const canvas = canvas3dRef.current;
+                    const video = webcamRef.current?.video;
+
+                    if (canvas && video) {
+                        const { videoWidth, videoHeight } = video;
+                        Drawing3d.resizeCamera(videoWidth, videoHeight);
+
+                        GestureRecognition.draw(
+                            mirrored,
+                            gesturePrediction.gestures,
+                            gesturePrediction.handedness,
+                            gesturePrediction.landmarks,
+                            videoWidth,
+                            videoHeight
+                        );
+                    }
+                }
             }
         }
     };
@@ -184,22 +197,6 @@ const Home = (props: Props) => {
         const newMode: number = parseInt(mode);
 
         setCurrentMode(newMode);
-        console.log(canvas3dRef);
-        if (newMode === GESTURE_RECOGNITION_MODE) {
-            console.log(canvas3dRef.current);
-            if (webcamRef.current?.video) {
-                if (canvas3dRef.current && !Drawing3d.isRendererInitialized()) {
-                    Drawing3d.initRenderer(canvas3dRef.current);
-                }
-                Drawing3d.test2();
-                Drawing3d.resizeCamera(
-                    webcamRef.current?.video.videoWidth,
-                    webcamRef.current?.video.videoHeight
-                );
-            }
-        } else {
-            //setUse3d(false);
-        }
     };
 
     useEffect(() => {
@@ -221,9 +218,24 @@ const Home = (props: Props) => {
     }, [modelLoadResult]);
 
     useEffect(() => {
+        if (!loading) {
+            if (
+                cameraDeviceProvider?.status.status === CAMERA_LOAD_STATUS_ERROR
+            ) {
+                alert(ERROR_ENABLE_CAMERA_PERMISSION_MSG);
+            } else if (
+                cameraDeviceProvider?.status.status ===
+                CAMERA_LOAD_STATUS_NO_DEVICES
+            ) {
+                alert(ERROR_NO_CAMERA_DEVICE_AVAILABLE_MSG);
+            }
+        }
+    }, [loading]);
+
+    useEffect(() => {
         interval = setInterval(() => {
             runPrediction();
-        }, 100);
+        }, 150);
 
         return () => clearInterval(interval);
     }, [webcamRef.current, modelLoadResult, mirrored, currentMode]);
@@ -232,15 +244,17 @@ const Home = (props: Props) => {
         <div className="flex flex-col h-screen">
             {/* Camera area */}
             <div className="relative h-[80%]">
-                <div className="relative w-screen h-full">
-                    {enableWebcam && videoDeviceProvider?.webcamId ? (
+                <div className="flex relative w-screen h-full">
+                    {cameraDeviceProvider?.status.status ===
+                        CAMERA_LOAD_STATUS_SUCCESS &&
+                    cameraDeviceProvider?.webcamId ? (
                         <>
                             <Webcam
                                 ref={webcamRef}
                                 mirrored={mirrored}
                                 className="h-full w-full object-contain p-2"
                                 videoConstraints={{
-                                    deviceId: videoDeviceProvider.webcamId,
+                                    deviceId: cameraDeviceProvider.webcamId,
                                 }}
                             />
                             <canvas
@@ -249,6 +263,16 @@ const Home = (props: Props) => {
                                 className="absolute top-0 left-0 h-full w-full object-contain"
                             ></canvas>
                         </>
+                    ) : cameraDeviceProvider?.status.status ===
+                      CAMERA_LOAD_STATUS_ERROR ? (
+                        <div className="flex h-full w-full justify-center items-center">
+                            Please Enable Camera Permission
+                        </div>
+                    ) : cameraDeviceProvider?.status.status ===
+                      CAMERA_LOAD_STATUS_NO_DEVICES ? (
+                        <div className="flex h-full w-full justify-center items-center">
+                            No Camera Device Available
+                        </div>
                     ) : null}
                 </div>
             </div>
@@ -281,13 +305,18 @@ const Home = (props: Props) => {
                     </div>
                     <div className="flex flex-row gap-2">
                         <ModelSelect
+                            cameraStatus={cameraDeviceProvider?.status.status}
                             modelList={modelLoadResult}
                             currentMode={currentMode.toString()}
                             onModeChange={onModeChange}
                         />
-                        <ModelSetting mode={currentMode} />
+                        <ModelSetting
+                            cameraStatus={cameraDeviceProvider?.status.status}
+                            mode={currentMode}
+                        />
                         <Separator orientation="vertical" className="mx-2" />
                         <Volume
+                            cameraStatus={cameraDeviceProvider?.status.status}
                             volume={volume}
                             setVolume={setVolume}
                             beep={beep}

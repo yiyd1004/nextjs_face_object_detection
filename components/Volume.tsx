@@ -1,5 +1,6 @@
 "use client";
 
+import { CAMERA_LOAD_STATUS_SUCCESS } from "@/utils/definitions";
 import { Volume2 } from "lucide-react";
 import { Dispatch, SetStateAction, useState } from "react";
 import { Button } from "./ui/button";
@@ -8,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Slider } from "./ui/slider";
 
 type Props = {
+    cameraStatus: number | undefined;
     volume: number;
     setVolume: Dispatch<SetStateAction<number>>;
     beep: (num: number) => void | undefined;
@@ -20,7 +22,14 @@ const Volume = (props: Props) => {
             <HoverCardTrigger>
                 <Popover onOpenChange={(open: boolean) => setSliderOpen(open)}>
                     <PopoverTrigger asChild>
-                        <Button variant={"outline"} size={"icon"}>
+                        <Button
+                            variant={"outline"}
+                            size={"icon"}
+                            disabled={
+                                props.cameraStatus !==
+                                CAMERA_LOAD_STATUS_SUCCESS
+                            }
+                        >
                             <Volume2 />
                         </Button>
                     </PopoverTrigger>

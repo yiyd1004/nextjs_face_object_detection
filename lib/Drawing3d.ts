@@ -3,14 +3,16 @@ import * as THREE from "three";
 import {
     CanvasTexture,
     Object3D,
-    OrthographicCamera,
+    PerspectiveCamera,
     Scene,
     WebGLRenderer,
 } from "three";
 
 const Drawing3d = (() => {
+    const CAMERA_MAX_DEPTH: number = 1000;
+
     let scene: Scene;
-    let camera: OrthographicCamera;
+    let camera: PerspectiveCamera;
     let renderer: WebGLRenderer;
     let isSceneInit: boolean = false;
     let isRendererInit: boolean = false;
@@ -21,15 +23,19 @@ const Drawing3d = (() => {
         }
 
         scene = new THREE.Scene();
-        camera = new THREE.OrthographicCamera(
-            width / -2,
-            width / 2,
-            height / 2,
-            height / -2,
-            0,
-            10
+
+        const diag = Math.sqrt(height * height + width * width);
+        const fov =
+            2 * Math.atan(diag / (2 * CAMERA_MAX_DEPTH)) * (180 / Math.PI);
+
+        camera = new THREE.PerspectiveCamera(
+            fov,
+            width / height,
+            0.1,
+            CAMERA_MAX_DEPTH
         );
-        camera.position.set(0, 0, 0);
+
+        camera.position.set(0, 0, CAMERA_MAX_DEPTH);
         isSceneInit = true;
     };
 
@@ -41,47 +47,43 @@ const Drawing3d = (() => {
         return isRendererInit;
     };
 
+    const getCameraPosition = (): THREE.Vector3 | null => {
+        if (isSceneInit && isRendererInit) {
+            return camera.position;
+        }
+
+        return null;
+    };
+
     const resizeCamera = (width: number, height: number) => {
         if (isSceneInit && isRendererInit) {
-            camera.left = width / -2;
-            camera.right = width / 2;
-            camera.top = height / 2;
-            camera.bottom = height / -2;
+            const diag = Math.sqrt(height * height + width * width);
+            const fov =
+                2 * Math.atan(diag / (2 * CAMERA_MAX_DEPTH)) * (180 / Math.PI);
+
+            camera.aspect = width / height;
+            camera.fov = fov;
             camera.updateProjectionMatrix();
             renderer.setSize(width, height, false);
         }
     };
 
-    const getCameraLeft = (): number => {
-        if (isSceneInit && isRendererInit) {
-            return camera.left;
-        }
+    const getVisibleSize = () => {
+        var vFOV = THREE.MathUtils.degToRad(camera.fov); // convert vertical fov to radians
 
-        return -1;
+        var height = 2 * Math.tan(vFOV / 2) * CAMERA_MAX_DEPTH; // visible height
+
+        var width = height * camera.aspect;
+
+        return [width, height];
     };
 
-    const getCameraRight = (): number => {
-        if (isSceneInit && isRendererInit) {
-            return camera.right;
-        }
+    const calculateDistance = (height: number): number => {
+        const vFOV = THREE.MathUtils.degToRad(camera.fov); // convert vertical fov to radians
 
-        return -1;
-    };
+        const dist = height / (2 * Math.tan(vFOV / 2));
 
-    const getCameraTop = (): number => {
-        if (isSceneInit && isRendererInit) {
-            return camera.top;
-        }
-
-        return -1;
-    };
-
-    const getCameraBottom = (): number => {
-        if (isSceneInit && isRendererInit) {
-            return camera.bottom;
-        }
-
-        return -1;
+        return CAMERA_MAX_DEPTH - dist;
     };
 
     const initRenderer = (cv: HTMLCanvasElement) => {
@@ -94,6 +96,7 @@ const Drawing3d = (() => {
             canvas: cv,
             alpha: true,
             antialias: true,
+            logarithmicDepthBuffer: true,
         });
         renderer.setPixelRatio(window.devicePixelRatio);
 
@@ -121,6 +124,7 @@ const Drawing3d = (() => {
     const createLabel = (
         category: string,
         score: number,
+        color: string,
         canvasWidth: number,
         canvasHeight: number,
         mirrored: boolean,
@@ -142,13 +146,13 @@ const Drawing3d = (() => {
             ctx.beginPath();
             const name = `${category} ${(score * 100).toFixed(0)}%`;
             const textSize = ctx.measureText(name);
-            ctx.fillStyle = category === "person" ? "#FF0F0F" : "#00B612";
+            ctx.fillStyle = color;
             ctx.globalAlpha = 1;
 
             mirrored
                 ? ctx.roundRect(
                       canvasWidth - box.originX - box.width - 2,
-                      box.originY - 20,
+                      box.originY - 2,
                       textSize.width + 8,
                       textSize.fontBoundingBoxAscent +
                           textSize.fontBoundingBoxDescent +
@@ -156,7 +160,7 @@ const Drawing3d = (() => {
                   )
                 : ctx.roundRect(
                       box.originX - 2,
-                      box.originY - 20,
+                      box.originY - 2,
                       textSize.width + 8,
                       textSize.fontBoundingBoxAscent +
                           textSize.fontBoundingBoxDescent +
@@ -174,12 +178,20 @@ const Drawing3d = (() => {
                 ? ctx.fillText(
                       name,
                       canvasWidth - box.originX - box.width + 2,
-                      box.originY - 7
+                      box.originY +
+                          textSize.fontBoundingBoxAscent +
+                          textSize.fontBoundingBoxDescent
                   )
-                : ctx.fillText(name, box.originX + 2, box.originY - 7);
+                : ctx.fillText(
+                      name,
+                      box.originX + 2,
+                      box.originY +
+                          textSize.fontBoundingBoxAscent +
+                          textSize.fontBoundingBoxDescent
+                  );
 
             const texture: CanvasTexture = new THREE.CanvasTexture(canvas);
-            texture.minFilter = THREE.LinearFilter;
+            texture.colorSpace = THREE.SRGBColorSpace;
             const labelMaterial = new THREE.MeshBasicMaterial({
                 map: texture,
                 side: THREE.DoubleSide,
@@ -216,15 +228,15 @@ const Drawing3d = (() => {
     };
 
     return {
+        CAMERA_MAX_DEPTH,
         initScene,
         isSceneInitialized,
         initRenderer,
         isRendererInitialized,
         resizeCamera,
-        getCameraLeft,
-        getCameraRight,
-        getCameraTop,
-        getCameraBottom,
+        getVisibleSize,
+        calculateDistance,
+        getCameraPosition,
         createLabel,
         addToScene,
         clearScene,

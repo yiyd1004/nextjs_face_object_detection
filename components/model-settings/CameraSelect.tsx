@@ -1,4 +1,4 @@
-import { VideoDevicesContext } from "@/providers/VideoDevicesProvider";
+import { CameraDevicesContext } from "@/providers/CameraDevicesProvider";
 import { useContext } from "react";
 import {
     Select,
@@ -11,7 +11,7 @@ import {
 type Props = {};
 
 const CameraSelect = (props: Props) => {
-    const VideoDevicesProvider = useContext(VideoDevicesContext);
+    const VideoDevicesProvider = useContext(CameraDevicesContext);
 
     return (
         <Select
