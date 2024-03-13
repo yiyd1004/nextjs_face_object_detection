@@ -51,6 +51,7 @@ const Home = (props: Props) => {
 
     const webcamRef = useRef<Webcam>(null);
     const canvas3dRef = useRef<HTMLCanvasElement>(null);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const [mirrored, setMirrored] = useState<boolean>(false);
     const [isRecording, setRecording] = useState<boolean>(false);
@@ -115,7 +116,6 @@ const Home = (props: Props) => {
     };
 
     const runPrediction = async () => {
-        console.log(webcamRef.current);
         if (
             webcamRef.current &&
             webcamRef.current.video &&
@@ -265,9 +265,9 @@ const Home = (props: Props) => {
     }, [loading]);
 
     useEffect(() => {
-        interval = setInterval(runPrediction, 150);
+        intervalRef.current = setInterval(runPrediction, 150);
 
-        return () => clearTimeout(interval);
+        return () => clearTimeout(intervalRef.current as NodeJS.Timeout);
     }, [webcamRef.current, modelLoadResult, mirrored, currentMode]);
 
     return (
