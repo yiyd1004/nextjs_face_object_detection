@@ -37,7 +37,14 @@ import {
 } from "@/utils/definitions";
 import "@mediapipe/tasks-vision";
 import clsx from "clsx";
-import { RefObject, useContext, useEffect, useRef, useState } from "react";
+import {
+    RefObject,
+    useCallback,
+    useContext,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
 import { Rings } from "react-loader-spinner";
 import Webcam from "react-webcam";
 import { toast } from "sonner";
@@ -51,7 +58,7 @@ const Home = (props: Props) => {
     const cameraDeviceProvider = useContext(CameraDevicesContext);
 
     const webcamRef = useRef<Webcam>(null);
-    const canvas3dRef = useRef<HTMLCanvasElement>(null);
+    const canvas3dRef = useRef<HTMLCanvasElement | null>(null);
 
     const [mirrored, setMirrored] = useState<boolean>(false);
     const [isRecording, setRecording] = useState<boolean>(false);
@@ -233,6 +240,14 @@ const Home = (props: Props) => {
         setCurrentMode(newMode);
     };
 
+    const canvas3dCallback = useCallback((element: any) => {
+        if (element !== null && !Drawing3d.isRendererInitialized()) {
+            canvas3dRef.current = element;
+            Drawing3d.initRenderer(element);
+            console.log("init renderer");
+        }
+    }, []);
+
     useEffect(() => {
         setLoading(true);
         Drawing3d.initScene(window.innerWidth, window.innerHeight);
@@ -245,13 +260,13 @@ const Home = (props: Props) => {
         }
     }, [modelLoadResult]);
 
-    useEffect(() => {
-        console.log(canvas3dRef.current, Drawing3d.isRendererInitialized());
-        if (canvas3dRef.current && !Drawing3d.isRendererInitialized()) {
-            Drawing3d.initRenderer(canvas3dRef.current);
-            console.log("init renderer");
-        }
-    }, [canvas3dRef]);
+    // useEffect(() => {
+    //     console.log(canvas3dRef.current, Drawing3d.isRendererInitialized());
+    //     if (canvas3dRef.current && !Drawing3d.isRendererInitialized()) {
+    //         Drawing3d.initRenderer(canvas3dRef.current);
+    //         console.log("init renderer");
+    //     }
+    // }, [canvas3dRef]);
 
     useEffect(() => {
         if (!loading) {
@@ -311,7 +326,7 @@ const Home = (props: Props) => {
                             />
                             <canvas
                                 id="3d canvas"
-                                ref={canvas3dRef}
+                                ref={canvas3dCallback}
                                 className="absolute top-0 left-0 h-full w-full object-contain"
                             ></canvas>
                         </>
