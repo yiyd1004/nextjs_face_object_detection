@@ -116,14 +116,7 @@ const Home = (props: Props) => {
         }
     };
 
-    const runPrediction = async () => {
-        console.log(
-            webcamRef.current,
-            webcamRef.current?.video,
-            webcamRef.current?.video?.readyState === 4,
-            currentMode,
-            ObjectDetection.isModelUpdating()
-        );
+    const runPrediction = () => {
         if (
             webcamRef.current &&
             webcamRef.current.video &&
@@ -144,7 +137,7 @@ const Home = (props: Props) => {
                     if (canvas && video) {
                         const { videoWidth, videoHeight } = video;
                         Drawing3d.resizeCamera(videoWidth, videoHeight);
-
+                        console.log("draw object: ", videoWidth, videoHeight);
                         ObjectDetection.draw(
                             mirrored,
                             objPredictions.detections,
