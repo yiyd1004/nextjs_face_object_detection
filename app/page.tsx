@@ -241,6 +241,7 @@ const Home = (props: Props) => {
 
     useEffect(() => {
         if (modelLoadResult) {
+            console.log(canvas3dRef.current, Drawing3d.isRendererInitialized());
             if (canvas3dRef.current && !Drawing3d.isRendererInitialized()) {
                 Drawing3d.initRenderer(canvas3dRef.current);
                 console.log("init renderer");
