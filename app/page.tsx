@@ -137,7 +137,7 @@ const Home = (props: Props) => {
                     if (canvas && video) {
                         const { videoWidth, videoHeight } = video;
                         Drawing3d.resizeCamera(videoWidth, videoHeight);
-                        console.log("draw object: ", videoWidth, videoHeight);
+                        console.log("draw object: ", objPredictions.detections);
                         ObjectDetection.draw(
                             mirrored,
                             objPredictions.detections,
