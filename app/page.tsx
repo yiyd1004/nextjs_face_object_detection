@@ -137,7 +137,7 @@ const Home = (props: Props) => {
                     if (canvas && video) {
                         const { videoWidth, videoHeight } = video;
                         Drawing3d.resizeCamera(videoWidth, videoHeight);
-                        console.log("draw object: ", objPredictions.detections);
+
                         ObjectDetection.draw(
                             mirrored,
                             objPredictions.detections,
@@ -235,6 +235,7 @@ const Home = (props: Props) => {
     useEffect(() => {
         if (canvas3dRef.current && !Drawing3d.isRendererInitialized()) {
             Drawing3d.initRenderer(canvas3dRef.current);
+            console.log("1");
         }
     }, [canvas3dRef.current]);
 
@@ -242,6 +243,7 @@ const Home = (props: Props) => {
         setLoading(true);
         Drawing3d.initScene(window.innerWidth, window.innerHeight);
         initModels();
+        console.log("2");
     }, []);
 
     useEffect(() => {
