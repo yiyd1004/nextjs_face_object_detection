@@ -8,7 +8,13 @@ MediaPipe Vision Tasks: Ver. 0.10.10
 
 MediaPipe Vision Models: Object Detection, Face Detection, Gesture Recognition, Face Landmark Detection
 
+
 ## Demo
+[Demo Link](https://yiyd1004.github.io/nextjs_face_object_detection/)
+
+:information_source:&nbsp;&nbsp;This app is not tested on mobile devices. Best to run on desktop browsers.
+
+
 ## Todo
 * add avatar using face landmarks
 * add mobile compability
