@@ -52,7 +52,6 @@ const Home = (props: Props) => {
 
     const webcamRef = useRef<Webcam>(null);
     const canvas3dRef = useRef<HTMLCanvasElement>(null);
-    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const [mirrored, setMirrored] = useState<boolean>(false);
     const [isRecording, setRecording] = useState<boolean>(false);
@@ -62,6 +61,7 @@ const Home = (props: Props) => {
     const [modelLoadResult, setModelLoadResult] = useState<ModelLoadResult[]>();
     const [loading, setLoading] = useState(false);
     const [currentMode, setCurrentMode] = useState<number>(NO_MODE);
+    const [animateDelay, setAnimateDelay] = useState<number | null>(150);
 
     const takeScreenShot = () => {};
     const recordVideo = () => {
@@ -235,15 +235,13 @@ const Home = (props: Props) => {
     useEffect(() => {
         if (canvas3dRef.current && !Drawing3d.isRendererInitialized()) {
             Drawing3d.initRenderer(canvas3dRef.current);
-            console.log("1");
         }
-    }, [canvas3dRef.current]);
+    }, []);
 
     useEffect(() => {
         setLoading(true);
         Drawing3d.initScene(window.innerWidth, window.innerHeight);
         initModels();
-        console.log("2");
     }, []);
 
     useEffect(() => {
@@ -272,7 +270,18 @@ const Home = (props: Props) => {
 
     //     return () => clearTimeout(intervalRef.current as NodeJS.Timeout);
     // }, [webcamRef.current, modelLoadResult, mirrored, currentMode]);
-    useInterval({ callback: runPrediction, delay: 150 });
+    useEffect(() => {
+        const cleanup = () => {
+            setAnimateDelay(null);
+        };
+
+        window.addEventListener("beforeunload", cleanup);
+        return () => {
+            window.removeEventListener("beforeunload", cleanup);
+        };
+    });
+
+    useInterval({ callback: runPrediction, delay: animateDelay });
 
     return (
         <div className="flex flex-col h-screen w-screen items-center">
