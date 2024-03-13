@@ -57,7 +57,7 @@ let stopTimeout: any = null;
 const Home = (props: Props) => {
     const cameraDeviceProvider = useContext(CameraDevicesContext);
 
-    const webcamRef = useRef<Webcam>(null);
+    const webcamRef = useRef<Webcam | null>(null);
     const canvas3dRef = useRef<HTMLCanvasElement | null>(null);
 
     const [mirrored, setMirrored] = useState<boolean>(false);
@@ -66,7 +66,7 @@ const Home = (props: Props) => {
         useState<boolean>(false);
     const [volume, setVolume] = useState<number>(0.8);
     const [modelLoadResult, setModelLoadResult] = useState<ModelLoadResult[]>();
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState<boolean>(false);
     const [currentMode, setCurrentMode] = useState<number>(NO_MODE);
     const [animateDelay, setAnimateDelay] = useState<number | null>(150);
 
@@ -129,7 +129,6 @@ const Home = (props: Props) => {
             webcamRef.current.video &&
             webcamRef.current.video.readyState === 4
         ) {
-            console.log("runPrediction");
             if (
                 currentMode === OBJ_DETECTION_MODE &&
                 !ObjectDetection.isModelUpdating()
@@ -240,11 +239,17 @@ const Home = (props: Props) => {
         setCurrentMode(newMode);
     };
 
-    const canvas3dCallback = useCallback((element: any) => {
+    const canvas3dRefCallback = useCallback((element: any) => {
         if (element !== null && !Drawing3d.isRendererInitialized()) {
             canvas3dRef.current = element;
             Drawing3d.initRenderer(element);
-            console.log("init renderer");
+            console.log("init three renderer");
+        }
+    }, []);
+
+    const webcamRefCallback = useCallback((element: any) => {
+        if (element != null) {
+            webcamRef.current = element;
         }
     }, []);
 
@@ -260,14 +265,6 @@ const Home = (props: Props) => {
         }
     }, [modelLoadResult]);
 
-    // useEffect(() => {
-    //     console.log(canvas3dRef.current, Drawing3d.isRendererInitialized());
-    //     if (canvas3dRef.current && !Drawing3d.isRendererInitialized()) {
-    //         Drawing3d.initRenderer(canvas3dRef.current);
-    //         console.log("init renderer");
-    //     }
-    // }, [canvas3dRef]);
-
     useEffect(() => {
         if (!loading) {
             if (
@@ -281,17 +278,13 @@ const Home = (props: Props) => {
                 alert(ERROR_NO_CAMERA_DEVICE_AVAILABLE_MSG);
             }
         }
-    }, [loading]);
+    }, [loading, cameraDeviceProvider?.status.status]);
 
-    // useEffect(() => {
-    //     intervalRef.current = setInterval(runPrediction, 150);
-
-    //     return () => clearTimeout(intervalRef.current as NodeJS.Timeout);
-    // }, [webcamRef.current, modelLoadResult, mirrored, currentMode]);
     useEffect(() => {
         const cleanup = () => {
             setAnimateDelay(null);
-            console.log("cleanup");
+            webcamRef.current = null;
+            canvas3dRef.current = null;
         };
 
         window.addEventListener("beforeunload", cleanup);
@@ -317,7 +310,7 @@ const Home = (props: Props) => {
                     cameraDeviceProvider?.webcamId ? (
                         <>
                             <Webcam
-                                ref={webcamRef}
+                                ref={webcamRefCallback}
                                 mirrored={mirrored}
                                 className="h-full w-full object-contain p-2"
                                 videoConstraints={{
@@ -326,7 +319,7 @@ const Home = (props: Props) => {
                             />
                             <canvas
                                 id="3d canvas"
-                                ref={canvas3dCallback}
+                                ref={canvas3dRefCallback}
                                 className="absolute top-0 left-0 h-full w-full object-contain"
                             ></canvas>
                         </>
