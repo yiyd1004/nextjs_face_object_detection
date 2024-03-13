@@ -10,6 +10,7 @@ import RecordVideo from "@/components/RecordVideo";
 import ScreenShot from "@/components/ScreenShot";
 import Volume from "@/components/Volume";
 import FaceModelSelect from "@/components/face-model-changer/FaceModelSelect";
+import useInterval from "@/components/hooks/useInterval";
 import ModelSelect from "@/components/model-changer/ModelSelect";
 import ModelSetting from "@/components/model-settings/ModelSetting";
 import { Separator } from "@/components/ui/separator";
@@ -116,6 +117,13 @@ const Home = (props: Props) => {
     };
 
     const runPrediction = async () => {
+        console.log(
+            webcamRef.current,
+            webcamRef.current?.video,
+            webcamRef.current?.video?.readyState === 4,
+            currentMode,
+            ObjectDetection.isModelUpdating()
+        );
         if (
             webcamRef.current &&
             webcamRef.current.video &&
@@ -264,11 +272,12 @@ const Home = (props: Props) => {
         }
     }, [loading]);
 
-    useEffect(() => {
-        intervalRef.current = setInterval(runPrediction, 150);
+    // useEffect(() => {
+    //     intervalRef.current = setInterval(runPrediction, 150);
 
-        return () => clearTimeout(intervalRef.current as NodeJS.Timeout);
-    }, [webcamRef.current, modelLoadResult, mirrored, currentMode]);
+    //     return () => clearTimeout(intervalRef.current as NodeJS.Timeout);
+    // }, [webcamRef.current, modelLoadResult, mirrored, currentMode]);
+    useInterval({ callback: runPrediction, delay: 150 });
 
     return (
         <div className="flex flex-col h-screen w-screen items-center">
