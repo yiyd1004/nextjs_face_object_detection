@@ -233,12 +233,6 @@ const Home = (props: Props) => {
     };
 
     useEffect(() => {
-        if (canvas3dRef.current && !Drawing3d.isRendererInitialized()) {
-            Drawing3d.initRenderer(canvas3dRef.current);
-        }
-    }, []);
-
-    useEffect(() => {
         setLoading(true);
         Drawing3d.initScene(window.innerWidth, window.innerHeight);
         initModels();
@@ -246,6 +240,11 @@ const Home = (props: Props) => {
 
     useEffect(() => {
         if (modelLoadResult) {
+            if (canvas3dRef.current && !Drawing3d.isRendererInitialized()) {
+                Drawing3d.initRenderer(canvas3dRef.current);
+                console.log("init renderer");
+            }
+
             setLoading(false);
         }
     }, [modelLoadResult]);
@@ -279,7 +278,7 @@ const Home = (props: Props) => {
         return () => {
             window.removeEventListener("beforeunload", cleanup);
         };
-    });
+    }, []);
 
     useInterval({ callback: runPrediction, delay: animateDelay });
 
