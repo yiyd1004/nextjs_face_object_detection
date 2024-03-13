@@ -2,15 +2,16 @@ export const NO_MODE: number = -1;
 export const OBJ_DETECTION_MODE: number = 0;
 export const FACE_DETECTION_MODE: number = 1;
 export const GESTURE_RECOGNITION_MODE: number = 2;
+export const FACE_LANDMARK_DETECTION_MODE: number = 3;
 
 export const CONFIG_SLIDER_STEP: number = 0.2;
 
 export const VISION_URL: string =
-    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.10/wasm";
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.12/wasm";
 
-export type Interface = "CPU" | "GPU";
-export const DELEGATE_GPU: Interface = "GPU";
-export const DELEGATE_CPU: Interface = "CPU";
+export type InterfaceDelegate = "CPU" | "GPU";
+export const DELEGATE_GPU: InterfaceDelegate = "GPU";
+export const DELEGATE_CPU: InterfaceDelegate = "CPU";
 
 export type RunningMode = "IMAGE" | "VIDEO";
 export const RUNNING_MODE_IMAGE: RunningMode = "IMAGE";
@@ -19,6 +20,7 @@ export const RUNNING_MODE_VIDEO: RunningMode = "VIDEO";
 export const OBJECT_DETECTION_STR: string = "Object Detection";
 export const FACE_DETECTION_STR: string = "Face Detection";
 export const GESTURE_RECOGNITION_STR: string = "Gesture Recognition";
+export const FACE_LANDMARK_DETECTION_STR: string = "Face Landmark Detection";
 
 export const VIDEO_INPUT: string = "videoinput";
 

@@ -33,21 +33,31 @@ const Volume = (props: Props) => {
                             <Volume2 />
                         </Button>
                     </PopoverTrigger>
-                    <PopoverContent>
-                        <Slider
-                            min={0}
-                            max={1}
-                            step={0.2}
-                            defaultValue={[props.volume]}
-                            onValueCommit={(val) => {
-                                props.setVolume(val[0]);
-                                props.beep(val[0]);
-                            }}
-                        />
+                    <PopoverContent className="w-fit">
+                        <div className="h-[200px]">
+                            <Slider
+                                min={0}
+                                max={1}
+                                step={0.2}
+                                defaultValue={[props.volume]}
+                                onValueCommit={(val) => {
+                                    props.setVolume(val[0]);
+                                    props.beep(val[0]);
+                                }}
+                                orientation="vertical"
+                                className="h-[60%]"
+                            />
+                        </div>
                     </PopoverContent>
                 </Popover>
             </HoverCardTrigger>
-            <HoverCardContent className="w-80" hidden={isSliderOpen}>
+            <HoverCardContent
+                className="w-80"
+                hidden={isSliderOpen}
+                side="bottom"
+                align="end"
+                avoidCollisions={true}
+            >
                 <div className="flex flex-col justify-between space-x-4">
                     <strong>Volume Slider 🔊</strong>
                     <p>Adjust the volume level of the notifications.</p>

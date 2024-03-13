@@ -1,3 +1,5 @@
+"use client";
+
 import { CameraDevicesContext } from "@/providers/CameraDevicesProvider";
 import { useContext } from "react";
 import {

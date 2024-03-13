@@ -5,14 +5,17 @@
 import AutoRecord from "@/components/AutoRecord";
 import DarkMode from "@/components/DarkMode";
 import FlipCamera from "@/components/FlipCamera";
-import ModelSelect from "@/components/ModelSelect";
+import InformationDialog from "@/components/InformationDialog";
 import RecordVideo from "@/components/RecordVideo";
 import ScreenShot from "@/components/ScreenShot";
 import Volume from "@/components/Volume";
+import FaceModelSelect from "@/components/face-model-changer/FaceModelSelect";
+import ModelSelect from "@/components/model-changer/ModelSelect";
 import ModelSetting from "@/components/model-settings/ModelSetting";
 import { Separator } from "@/components/ui/separator";
 import Drawing3d from "@/lib/Drawing3d";
 import FaceDetection from "@/mediapipe/face-detection";
+import FaceLandmarkDetection from "@/mediapipe/face-landmark";
 import GestureRecognition from "@/mediapipe/gesture-recognition";
 import initMediaPipVision from "@/mediapipe/mediapipe-vision";
 import ObjectDetection from "@/mediapipe/object-detection";
@@ -25,6 +28,7 @@ import {
     ERROR_ENABLE_CAMERA_PERMISSION_MSG,
     ERROR_NO_CAMERA_DEVICE_AVAILABLE_MSG,
     FACE_DETECTION_MODE,
+    FACE_LANDMARK_DETECTION_MODE,
     GESTURE_RECOGNITION_MODE,
     ModelLoadResult,
     NO_MODE,
@@ -83,10 +87,10 @@ const Home = (props: Props) => {
                 ObjectDetection.initModel(vision),
                 FaceDetection.initModel(vision),
                 GestureRecognition.initModel(vision),
+                FaceLandmarkDetection.initModel(vision),
             ];
 
             const results = await Promise.all(models);
-
             const enabledModels = results.filter((result) => result.loadResult);
 
             if (enabledModels.length > 0) {
@@ -171,7 +175,7 @@ const Home = (props: Props) => {
                     webcamRef.current.video
                 );
 
-                if (gesturePrediction?.gestures) {
+                if (gesturePrediction) {
                     const canvas = canvas3dRef.current;
                     const video = webcamRef.current?.video;
 
@@ -181,9 +185,31 @@ const Home = (props: Props) => {
 
                         GestureRecognition.draw(
                             mirrored,
-                            gesturePrediction.gestures,
-                            gesturePrediction.handedness,
-                            gesturePrediction.landmarks,
+                            gesturePrediction,
+                            videoWidth,
+                            videoHeight
+                        );
+                    }
+                }
+            } else if (
+                currentMode === FACE_LANDMARK_DETECTION_MODE &&
+                !FaceLandmarkDetection.isModelUpdating()
+            ) {
+                const faceLandmarkPrediction = FaceLandmarkDetection.detectFace(
+                    webcamRef.current.video
+                );
+
+                if (faceLandmarkPrediction) {
+                    const canvas = canvas3dRef.current;
+                    const video = webcamRef.current?.video;
+
+                    if (canvas && video) {
+                        const { videoWidth, videoHeight } = video;
+                        Drawing3d.resizeCamera(videoWidth, videoHeight);
+
+                        FaceLandmarkDetection.draw(
+                            mirrored,
+                            faceLandmarkPrediction,
                             videoWidth,
                             videoHeight
                         );
@@ -196,6 +222,11 @@ const Home = (props: Props) => {
     const onModeChange = (mode: string) => {
         const newMode: number = parseInt(mode);
 
+        if (newMode === FACE_LANDMARK_DETECTION_MODE) {
+            FaceLandmarkDetection.setDrawingMode(
+                FaceLandmarkDetection.CONNECTION_FACE_LANDMARKS_TESSELATION
+            );
+        }
         setCurrentMode(newMode);
     };
 
@@ -233,18 +264,21 @@ const Home = (props: Props) => {
     }, [loading]);
 
     useEffect(() => {
-        interval = setInterval(() => {
-            runPrediction();
-        }, 150);
+        interval = setInterval(runPrediction, 150);
 
-        return () => clearInterval(interval);
+        return () => clearTimeout(interval);
     }, [webcamRef.current, modelLoadResult, mirrored, currentMode]);
 
     return (
-        <div className="flex flex-col h-screen">
+        <div className="flex flex-col h-screen w-screen items-center">
             {/* Camera area */}
-            <div className="relative h-[80%]">
-                <div className="flex relative w-screen h-full">
+            <div
+                className={clsx(
+                    "relative h-[80%] w-[85%]",
+                    "border-primary/5 border-2 max-h-xs"
+                )}
+            >
+                <div className="flex relative w-full h-full">
                     {cameraDeviceProvider?.status.status ===
                         CAMERA_LOAD_STATUS_SUCCESS &&
                     cameraDeviceProvider?.webcamId ? (
@@ -276,8 +310,8 @@ const Home = (props: Props) => {
                     ) : null}
                 </div>
             </div>
-            {/* Right area */}
-            <div className="flex flex-col flex-1">
+            {/* Bottom area */}
+            <div className="flex flex-col flex-1 w-[85%]">
                 <div
                     className={clsx(
                         "border-primary/5 border-2 max-h-xs",
@@ -289,21 +323,34 @@ const Home = (props: Props) => {
                         <DarkMode />
                         <FlipCamera setMirrored={setMirrored} />
                         <Separator orientation="vertical" className="mx-2" />
+                        {false && (
+                            <>
+                                <ScreenShot takeScreenShot={takeScreenShot} />
+                                <RecordVideo
+                                    isRecording={isRecording}
+                                    recordVideo={recordVideo}
+                                />
+                                <Separator
+                                    orientation="vertical"
+                                    className="mx-2"
+                                />
+                                <AutoRecord
+                                    isAutoRecordEnabled={isAutoRecordEnabled}
+                                    toggleAutoRecord={toggleAutoRecord}
+                                />
+                                <Separator
+                                    orientation="vertical"
+                                    className="mx-2"
+                                />
+                            </>
+                        )}
                     </div>
                     <div className="flex flex-row gap-2">
-                        <Separator orientation="vertical" className="mx-2" />
-                        <ScreenShot takeScreenShot={takeScreenShot} />
-                        <RecordVideo
-                            isRecording={isRecording}
-                            recordVideo={recordVideo}
-                        />
-                        <Separator orientation="vertical" className="mx-2" />
-                        <AutoRecord
-                            isAutoRecordEnabled={isAutoRecordEnabled}
-                            toggleAutoRecord={toggleAutoRecord}
-                        />
-                    </div>
-                    <div className="flex flex-row gap-2">
+                        {currentMode === FACE_LANDMARK_DETECTION_MODE && (
+                            <FaceModelSelect
+                                currentMode={currentMode.toString()}
+                            />
+                        )}
                         <ModelSelect
                             cameraStatus={cameraDeviceProvider?.status.status}
                             modelList={modelLoadResult}
@@ -314,6 +361,7 @@ const Home = (props: Props) => {
                             cameraStatus={cameraDeviceProvider?.status.status}
                             mode={currentMode}
                         />
+                        <InformationDialog />
                         <Separator orientation="vertical" className="mx-2" />
                         <Volume
                             cameraStatus={cameraDeviceProvider?.status.status}

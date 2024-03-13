@@ -3,7 +3,7 @@ import {
     DELEGATE_GPU,
     FACE_DETECTION_MODE,
     FACE_DETECTION_STR,
-    Interface,
+    InterfaceDelegate,
     ModelLoadResult,
     RUNNING_MODE_VIDEO,
     RunningMode,
@@ -25,17 +25,17 @@ const FaceDetection = (() => {
     const MODEL_URL: string =
         "https://storage.googleapis.com/mediapipe-models/face_detector/blaze_face_short_range/float16/latest/blaze_face_short_range.tflite";
 
-    const CONFIG_FACE_MIN_DETECTION_CONFIDENCE_VALUE: number = 0;
-    const CONFIG_FACE_MAX_DETECTION_CONFIDENCE_VALUE: number = 1;
-    const CONFIG_FACE_MIN_SUPPRESSION_THRESHOLD_VALUE: number = 0;
-    const CONFIG_FACE_MAX_SUPPRESSION_THRESHOLD_VALUE: number = 1;
-    const CONFIG_FACE_DEFAULT_DETECTION_CONFIDENCE_SLIDER_STEP_VALUE: number = 0.1;
-    const CONFIG_FACE_DEFAULT_SUPPRESSION_THRESHOLD_SLIDER_STEP_VALUE: number = 0.1;
+    const CONFIG_MIN_DETECTION_CONFIDENCE_VALUE: number = 0;
+    const CONFIG_MAX_DETECTION_CONFIDENCE_VALUE: number = 1;
+    const CONFIG_MIN_SUPPRESSION_THRESHOLD_VALUE: number = 0;
+    const CONFIG_MAX_SUPPRESSION_THRESHOLD_VALUE: number = 1;
+    const CONFIG_DEFAULT_DETECTION_CONFIDENCE_SLIDER_STEP_VALUE: number = 0.1;
+    const CONFIG_DEFAULT_SUPPRESSION_THRESHOLD_SLIDER_STEP_VALUE: number = 0.1;
 
     let minDetectionConfidence: number = 0.5;
     let minSuppressionThreshold: number = 0.3;
     let runningMode: RunningMode = RUNNING_MODE_VIDEO;
-    let delegate: Interface = DELEGATE_GPU;
+    let delegate: InterfaceDelegate = DELEGATE_GPU;
     let isUpdating: boolean = false;
 
     let faceDetector: FaceDetector | null = null;
@@ -47,17 +47,14 @@ const FaceDetection = (() => {
             loadResult: false,
         };
 
+        if (faceDetector) {
+            result.loadResult = true;
+            return result;
+        }
+
         try {
             if (vision) {
-                const config: FaceDetectorOptions = {
-                    baseOptions: {
-                        modelAssetPath: MODEL_URL,
-                        delegate: DELEGATE_GPU,
-                    },
-                    minDetectionConfidence: minDetectionConfidence,
-                    minSuppressionThreshold: minSuppressionThreshold,
-                    runningMode: runningMode,
-                };
+                const config: FaceDetectorOptions = getConfig();
 
                 faceDetector = await FaceDetector.createFromOptions(
                     vision,
@@ -91,22 +88,19 @@ const FaceDetection = (() => {
         return config;
     };
 
-    const setRunningMode = (mode: RunningMode) => {
-        runningMode = mode;
-    };
+    const getRunningMode = (): RunningMode => runningMode;
+    const setRunningMode = (mode: RunningMode) => (runningMode = mode);
 
-    const setMinDetectionConfidence = (min: number) => {
-        minDetectionConfidence = min;
-    };
+    const getMinDetectionConfidence = (): number => minDetectionConfidence;
+    const setMinDetectionConfidence = (min: number) =>
+        (minDetectionConfidence = min);
 
-    const setMinSuppressionThreshold = (min: number) => {
-        minSuppressionThreshold = min;
-    };
+    const getMinSuppressionThreshold = (): number => minSuppressionThreshold;
+    const setMinSuppressionThreshold = (min: number) =>
+        (minSuppressionThreshold = min);
 
-    const setInterfaceDelegate = (del: Interface) => {
-        console.log("set interface:", del);
-        delegate = del;
-    };
+    const getInterfaceDelegate = (): InterfaceDelegate => delegate;
+    const setInterfaceDelegate = (del: InterfaceDelegate) => (delegate = del);
 
     const updateModelConfig = async () => {
         if (faceDetector) {
@@ -148,7 +142,8 @@ const FaceDetection = (() => {
     ) => {
         if (detections) {
             Drawing3d.clearScene();
-            const objGroup = new THREE.Object3D();
+            const objGroup: THREE.Object3D<THREE.Object3DEventMap> =
+                new THREE.Object3D();
             detections.forEach((detected: Detection) => {
                 if (detected.boundingBox) {
                     const box: BoundingBox = detected.boundingBox;
@@ -160,9 +155,9 @@ const FaceDetection = (() => {
                         return;
                     }
 
-                    const rightPoint = cameraPos.x + width / 2;
-                    const leftPoint = -rightPoint;
-                    const topPoint = cameraPos.y + height / 2;
+                    const rightPoint: number = cameraPos.x + width / 2;
+                    const leftPoint: number = -rightPoint;
+                    const topPoint: number = cameraPos.y + height / 2;
 
                     if (mirrored) {
                         points.push(
@@ -227,6 +222,8 @@ const FaceDetection = (() => {
                     const material = new LineMaterial({
                         color: "#FF0F0F",
                         linewidth: 0.008,
+                        vertexColors: false,
+                        worldUnits: false,
                     });
 
                     const line = new Line2(geo, material);
@@ -258,17 +255,27 @@ const FaceDetection = (() => {
     };
 
     return {
-        CONFIG_FACE_MIN_DETECTION_CONFIDENCE_VALUE,
-        CONFIG_FACE_MAX_DETECTION_CONFIDENCE_VALUE,
-        CONFIG_FACE_MIN_SUPPRESSION_THRESHOLD_VALUE,
-        CONFIG_FACE_MAX_SUPPRESSION_THRESHOLD_VALUE,
-        CONFIG_FACE_DEFAULT_DETECTION_CONFIDENCE_SLIDER_STEP_VALUE,
-        CONFIG_FACE_DEFAULT_SUPPRESSION_THRESHOLD_SLIDER_STEP_VALUE,
+        CONFIG_FACE_MIN_DETECTION_CONFIDENCE_VALUE:
+            CONFIG_MIN_DETECTION_CONFIDENCE_VALUE,
+        CONFIG_FACE_MAX_DETECTION_CONFIDENCE_VALUE:
+            CONFIG_MAX_DETECTION_CONFIDENCE_VALUE,
+        CONFIG_FACE_MIN_SUPPRESSION_THRESHOLD_VALUE:
+            CONFIG_MIN_SUPPRESSION_THRESHOLD_VALUE,
+        CONFIG_FACE_MAX_SUPPRESSION_THRESHOLD_VALUE:
+            CONFIG_MAX_SUPPRESSION_THRESHOLD_VALUE,
+        CONFIG_FACE_DEFAULT_DETECTION_CONFIDENCE_SLIDER_STEP_VALUE:
+            CONFIG_DEFAULT_DETECTION_CONFIDENCE_SLIDER_STEP_VALUE,
+        CONFIG_FACE_DEFAULT_SUPPRESSION_THRESHOLD_SLIDER_STEP_VALUE:
+            CONFIG_DEFAULT_SUPPRESSION_THRESHOLD_SLIDER_STEP_VALUE,
         initModel,
-        getConfig,
+        getInterfaceDelegate,
         setInterfaceDelegate,
+        getMinDetectionConfidence,
         setMinDetectionConfidence,
+        getMinSuppressionThreshold,
         setMinSuppressionThreshold,
+        getRunningMode,
+        setRunningMode,
         draw,
         detectFace,
         isModelUpdating,

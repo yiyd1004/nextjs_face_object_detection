@@ -15,6 +15,7 @@ const RecordVideo = (props: Props) => {
                     variant={props.isRecording ? "destructive" : "outline"}
                     size={"icon"}
                     onClick={props.recordVideo}
+                    disabled={true}
                 >
                     <Video />
                 </Button>

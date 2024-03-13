@@ -7,9 +7,8 @@ import { Slider } from "../ui/slider";
 type Props = {};
 
 const ObjectModelSetting = (props: Props) => {
-    const defaultMaxResult = ObjectDetection.getConfig().maxResults ?? 5;
-    const defaultScoreThreshold =
-        ObjectDetection.getConfig().scoreThreshold ?? 0.5;
+    const defaultMaxResult = ObjectDetection.getMaxResults() ?? 5;
+    const defaultScoreThreshold = ObjectDetection.getScoreThreshold() ?? 0.5;
     const [maxResults, setMaxResults] = useState<number>(defaultMaxResult);
     const [scoreThreshold, setScoreThreshold] = useState<number>(
         defaultScoreThreshold

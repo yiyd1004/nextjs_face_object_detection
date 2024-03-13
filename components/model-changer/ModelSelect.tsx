@@ -1,38 +1,43 @@
 "use client";
 
+import { ModelLoadResult } from "@/utils/definitions";
 import { useState } from "react";
 import {
     HoverCard,
     HoverCardContent,
     HoverCardTrigger,
 } from "../ui/hover-card";
-import ModelSettingDialog from "./ModelSettingDialog";
+import ModelSelectContent from "./ModelSelectContent";
 
 type Props = {
     cameraStatus: number | undefined;
-    mode: number;
+    modelList: ModelLoadResult[] | undefined;
+    currentMode: string;
+    onModeChange: ((value: string) => void) | undefined;
 };
 
-const ModelSetting = (props: Props) => {
+const ModelSelect = (props: Props) => {
     const [isDialogOpen, setDialogOpen] = useState<boolean>(false);
 
     return (
         <HoverCard openDelay={0} closeDelay={0}>
             <HoverCardTrigger>
-                <ModelSettingDialog
-                    mode={props.mode}
-                    setDialogOpen={setDialogOpen}
+                <ModelSelectContent
                     cameraStatus={props.cameraStatus}
+                    modelList={props.modelList}
+                    currentMode={props.currentMode}
+                    onModeChange={props.onModeChange}
+                    setDialogOpen={setDialogOpen}
                 />
             </HoverCardTrigger>
             <HoverCardContent className="w-80" hidden={isDialogOpen}>
                 <div className="flex flex-col justify-between space-x-4">
-                    <strong>Model Settings ⚙️</strong>
-                    <p>Adjust model parameters</p>
+                    <strong>Change Model ⚙️</strong>
+                    <p>Change to different detection model</p>
                 </div>
             </HoverCardContent>
         </HoverCard>
     );
 };
 
-export default ModelSetting;
+export default ModelSelect;

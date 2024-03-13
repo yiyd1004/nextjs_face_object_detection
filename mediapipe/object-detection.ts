@@ -1,7 +1,7 @@
 import Drawing3d from "@/lib/Drawing3d";
 import {
     DELEGATE_GPU,
-    Interface,
+    InterfaceDelegate,
     ModelLoadResult,
     OBJECT_DETECTION_STR,
     OBJ_DETECTION_MODE,
@@ -26,18 +26,18 @@ const ObjectDetection = (() => {
     const MODEL_URL: string =
         "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/latest/efficientdet_lite0.tflite";
 
-    const CONFIG_OBJECT_MIN_RESULT_VALUE: number = 0;
-    const CONFIG_OBJECT_MAX_RESULT_VALUE: number = 10;
-    const CONFIG_OBJECT_MIN_SCORE_VALUE: number = 0;
-    const CONFIG_OBJECT_MAX_SCORE_VALUE: number = 1;
-    const CONFIG_OBJECT_DEFAULT_RESULT_SLIDER_STEP_VALUE: number = 1;
-    const CONFIG_OBJECT_DEFAULT_SCORE_SLIDER_STEP_VALUE: number = 0.1;
+    const CONFIG_MIN_RESULT_VALUE: number = 0;
+    const CONFIG_MAX_RESULT_VALUE: number = 10;
+    const CONFIG_MIN_SCORE_VALUE: number = 0;
+    const CONFIG_MAX_SCORE_VALUE: number = 1;
+    const CONFIG_DEFAULT_RESULT_SLIDER_STEP_VALUE: number = 1;
+    const CONFIG_DEFAULT_SCORE_SLIDER_STEP_VALUE: number = 0.1;
 
     let displayNamesLocale: string = "en";
     let maxResults: number = 5;
     let scoreThreshold: number = 0.5;
     let runningMode: RunningMode = RUNNING_MODE_VIDEO;
-    let delegate: Interface = DELEGATE_GPU;
+    let delegate: InterfaceDelegate = DELEGATE_GPU;
 
     let objectDetector: ObjectDetector | null = null;
     let isUpdating: boolean = false;
@@ -48,6 +48,11 @@ const ObjectDetection = (() => {
             mode: OBJ_DETECTION_MODE,
             loadResult: false,
         };
+
+        if (objectDetector) {
+            result.loadResult = true;
+            return result;
+        }
 
         try {
             if (vision) {
@@ -86,21 +91,17 @@ const ObjectDetection = (() => {
         return config;
     };
 
-    const setRunningMode = (mode: RunningMode) => {
-        runningMode = mode;
-    };
+    const getRunningMode = (): RunningMode => runningMode;
+    const setRunningMode = (mode: RunningMode) => (runningMode = mode);
 
-    const setMaxResults = (max: number) => {
-        maxResults = max;
-    };
+    const getMaxResults = (): number => maxResults;
+    const setMaxResults = (max: number) => (maxResults = max);
 
-    const setScoreThreshold = (score: number) => {
-        scoreThreshold = score;
-    };
+    const getScoreThreshold = (): number => scoreThreshold;
+    const setScoreThreshold = (score: number) => (scoreThreshold = score);
 
-    const setInterfaceDelegate = (del: Interface) => {
-        delegate = del;
-    };
+    const getInterfaceDelegate = (): InterfaceDelegate => delegate;
+    const setInterfaceDelegate = (del: InterfaceDelegate) => (delegate = del);
 
     const updateModelConfig = async () => {
         if (objectDetector) {
@@ -111,9 +112,7 @@ const ObjectDetection = (() => {
         }
     };
 
-    const isModelUpdating = (): boolean => {
-        return isUpdating;
-    };
+    const isModelUpdating = (): boolean => isUpdating;
 
     const detectObject = (
         video: HTMLVideoElement
@@ -230,13 +229,16 @@ const ObjectDetection = (() => {
                     );
                     const material = new LineMaterial({
                         linewidth: 0.008,
+                        worldUnits: false,
+                        vertexColors: false,
                     });
                     material.color.set(
                         category.categoryName === "person" ? 0xff0f0f : 0x00b612
                     );
 
                     const line = new Line2(geo, material);
-
+                    line.computeLineDistances();
+                    line.scale.set(1, 1, 1);
                     objGroup.add(line);
 
                     // Add text
@@ -267,19 +269,24 @@ const ObjectDetection = (() => {
     };
 
     return {
-        CONFIG_OBJECT_MIN_RESULT_VALUE,
-        CONFIG_OBJECT_MAX_RESULT_VALUE,
-        CONFIG_OBJECT_MIN_SCORE_VALUE,
-        CONFIG_OBJECT_MAX_SCORE_VALUE,
-        CONFIG_OBJECT_DEFAULT_RESULT_SLIDER_STEP_VALUE,
-        CONFIG_OBJECT_DEFAULT_SCORE_SLIDER_STEP_VALUE,
+        CONFIG_OBJECT_MIN_RESULT_VALUE: CONFIG_MIN_RESULT_VALUE,
+        CONFIG_OBJECT_MAX_RESULT_VALUE: CONFIG_MAX_RESULT_VALUE,
+        CONFIG_OBJECT_MIN_SCORE_VALUE: CONFIG_MIN_SCORE_VALUE,
+        CONFIG_OBJECT_MAX_SCORE_VALUE: CONFIG_MAX_SCORE_VALUE,
+        CONFIG_OBJECT_DEFAULT_RESULT_SLIDER_STEP_VALUE:
+            CONFIG_DEFAULT_RESULT_SLIDER_STEP_VALUE,
+        CONFIG_OBJECT_DEFAULT_SCORE_SLIDER_STEP_VALUE:
+            CONFIG_DEFAULT_SCORE_SLIDER_STEP_VALUE,
         initModel,
         detectObject,
         draw,
-        getConfig,
+        getInterfaceDelegate,
         setInterfaceDelegate,
+        getMaxResults,
         setMaxResults,
+        getScoreThreshold,
         setScoreThreshold,
+        getRunningMode,
         setRunningMode,
         updateModelConfig,
         isModelUpdating,

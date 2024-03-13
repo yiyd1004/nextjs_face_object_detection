@@ -1,3 +1,5 @@
+"use client";
+
 import FaceDetection from "@/mediapipe/face-detection";
 import { useState } from "react";
 import { Slider } from "../ui/slider";
@@ -6,9 +8,9 @@ type Props = {};
 
 const FaceModelSetting = (props: Props) => {
     const defaultMinDetectConf =
-        FaceDetection.getConfig().minDetectionConfidence ?? 0.5;
+        FaceDetection.getMinDetectionConfidence() ?? 0.5;
     const defaultMinSuppThreshold =
-        FaceDetection.getConfig().minSuppressionThreshold ?? 0.3;
+        FaceDetection.getMinSuppressionThreshold() ?? 0.3;
     const [minDetectConf, setMinDetectConf] =
         useState<number>(defaultMinDetectConf);
     const [minSuppThreshold, setMinSuppThreshold] = useState<number>(

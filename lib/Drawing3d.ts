@@ -88,10 +88,9 @@ const Drawing3d = (() => {
 
     const initRenderer = (cv: HTMLCanvasElement) => {
         if (isRendererInit) {
-            console.log("return");
             return;
         }
-        console.log("initRenderer");
+
         renderer = new THREE.WebGLRenderer({
             canvas: cv,
             alpha: true,

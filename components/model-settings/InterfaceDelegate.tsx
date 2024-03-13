@@ -7,7 +7,7 @@ import {
     DELEGATE_GPU,
     FACE_DETECTION_MODE,
     GESTURE_RECOGNITION_MODE,
-    Interface,
+    InterfaceDelegate,
     OBJ_DETECTION_MODE,
 } from "@/utils/definitions";
 import { useEffect, useState } from "react";
@@ -24,10 +24,10 @@ type Props = {
 };
 
 const InterfaceDelegate = (props: Props) => {
-    const [delegate, setDelegate] = useState<Interface>(DELEGATE_GPU);
+    const [delegate, setDelegate] = useState<InterfaceDelegate>(DELEGATE_GPU);
 
     const onValueChange = (value: string) => {
-        let newDelegate: Interface =
+        let newDelegate: InterfaceDelegate =
             value === DELEGATE_GPU ? DELEGATE_GPU : DELEGATE_CPU;
 
         setDelegate(newDelegate);
@@ -46,10 +46,10 @@ const InterfaceDelegate = (props: Props) => {
     useEffect(() => {
         switch (props.mode) {
             case OBJ_DETECTION_MODE:
-                setDelegate(ObjectDetection.getConfig().baseOptions?.delegate!);
+                setDelegate(ObjectDetection.getInterfaceDelegate());
                 break;
             case FACE_DETECTION_MODE:
-                setDelegate(FaceDetection.getConfig().baseOptions?.delegate!);
+                setDelegate(FaceDetection.getInterfaceDelegate());
                 break;
             case GESTURE_RECOGNITION_MODE:
                 break;

@@ -6,33 +6,31 @@ import {
     HoverCardContent,
     HoverCardTrigger,
 } from "../ui/hover-card";
-import ModelSettingDialog from "./ModelSettingDialog";
+import FaceModelSelectContent from "./FaceModelSelectContent";
 
 type Props = {
-    cameraStatus: number | undefined;
-    mode: number;
+    currentMode: string;
 };
 
-const ModelSetting = (props: Props) => {
+const FaceModelSelect = (props: Props) => {
     const [isDialogOpen, setDialogOpen] = useState<boolean>(false);
 
     return (
         <HoverCard openDelay={0} closeDelay={0}>
             <HoverCardTrigger>
-                <ModelSettingDialog
-                    mode={props.mode}
+                <FaceModelSelectContent
+                    currentMode={props.currentMode}
                     setDialogOpen={setDialogOpen}
-                    cameraStatus={props.cameraStatus}
                 />
             </HoverCardTrigger>
             <HoverCardContent className="w-80" hidden={isDialogOpen}>
                 <div className="flex flex-col justify-between space-x-4">
-                    <strong>Model Settings ⚙️</strong>
-                    <p>Adjust model parameters</p>
+                    <strong>Change Face Landmark Mode ⚙️</strong>
+                    <p>Change to different landmark mode</p>
                 </div>
             </HoverCardContent>
         </HoverCard>
     );
 };
 
-export default ModelSetting;
+export default FaceModelSelect;

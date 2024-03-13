@@ -19,6 +19,7 @@ const AutoRecord = (props: Props) => {
                     }
                     size={"icon"}
                     onClick={props.toggleAutoRecord}
+                    disabled={true}
                 >
                     {props.isAutoRecordEnabled ? (
                         <Rings color="white" height={45} />

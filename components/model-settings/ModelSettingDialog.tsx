@@ -1,8 +1,14 @@
+"use client";
+
 import FaceDetection from "@/mediapipe/face-detection";
+import FaceLandmarkDetection from "@/mediapipe/face-landmark";
+import GestureRecognition from "@/mediapipe/gesture-recognition";
 import ObjectDetection from "@/mediapipe/object-detection";
 import {
     CAMERA_LOAD_STATUS_SUCCESS,
     FACE_DETECTION_MODE,
+    FACE_LANDMARK_DETECTION_MODE,
+    GESTURE_RECOGNITION_MODE,
     OBJ_DETECTION_MODE,
 } from "@/utils/definitions";
 import { DialogClose } from "@radix-ui/react-dialog";
@@ -19,7 +25,9 @@ import {
     DialogTrigger,
 } from "../ui/dialog";
 import CameraSelect from "./CameraSelect";
+import FaceLandmarkSetting from "./FaceLandmarkSetting";
 import FaceModelSetting from "./FaceModelSetting";
+import GestureModelSetting from "./GestureModelSetting";
 import InterfaceDelegate from "./InterfaceDelegate";
 import ObjectModelSetting from "./ObjectModelSetting";
 
@@ -41,6 +49,12 @@ const ModelSettingDialog = (props: Props) => {
                 break;
             case FACE_DETECTION_MODE:
                 FaceDetection.updateModelConfig();
+                break;
+            case GESTURE_RECOGNITION_MODE:
+                GestureRecognition.updateModelConfig();
+                break;
+            case FACE_LANDMARK_DETECTION_MODE:
+                FaceLandmarkDetection.updateModelConfig();
                 break;
         }
     };
@@ -74,6 +88,12 @@ const ModelSettingDialog = (props: Props) => {
                         <ObjectModelSetting />
                     )}
                     {props.mode === FACE_DETECTION_MODE && <FaceModelSetting />}
+                    {props.mode === GESTURE_RECOGNITION_MODE && (
+                        <GestureModelSetting />
+                    )}
+                    {props.mode === FACE_LANDMARK_DETECTION_MODE && (
+                        <FaceLandmarkSetting />
+                    )}
                 </div>
                 <DialogFooter>
                     <DialogClose asChild>
