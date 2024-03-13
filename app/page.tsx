@@ -115,6 +115,7 @@ const Home = (props: Props) => {
     };
 
     const runPrediction = async () => {
+        console.log(webcamRef.current);
         if (
             webcamRef.current &&
             webcamRef.current.video &&
@@ -267,13 +268,7 @@ const Home = (props: Props) => {
         interval = setInterval(runPrediction, 150);
 
         return () => clearTimeout(interval);
-    }, [
-        webcamRef.current,
-        modelLoadResult,
-        mirrored,
-        currentMode,
-        canvas3dRef.current,
-    ]);
+    }, [webcamRef.current, modelLoadResult, mirrored, currentMode]);
 
     return (
         <div className="flex flex-col h-screen w-screen items-center">
