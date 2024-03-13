@@ -267,7 +267,13 @@ const Home = (props: Props) => {
         interval = setInterval(runPrediction, 150);
 
         return () => clearTimeout(interval);
-    }, [webcamRef.current, modelLoadResult, mirrored, currentMode]);
+    }, [
+        webcamRef.current,
+        modelLoadResult,
+        mirrored,
+        currentMode,
+        canvas3dRef.current,
+    ]);
 
     return (
         <div className="flex flex-col h-screen w-screen items-center">
