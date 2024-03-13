@@ -122,6 +122,7 @@ const Home = (props: Props) => {
             webcamRef.current.video &&
             webcamRef.current.video.readyState === 4
         ) {
+            console.log("runPrediction");
             if (
                 currentMode === OBJ_DETECTION_MODE &&
                 !ObjectDetection.isModelUpdating()
@@ -272,6 +273,7 @@ const Home = (props: Props) => {
     useEffect(() => {
         const cleanup = () => {
             setAnimateDelay(null);
+            console.log("cleanup");
         };
 
         window.addEventListener("beforeunload", cleanup);
