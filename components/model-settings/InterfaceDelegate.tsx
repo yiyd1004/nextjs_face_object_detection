@@ -5,9 +5,9 @@ import ObjectDetection from "@/mediapipe/object-detection";
 import {
     DELEGATE_CPU,
     DELEGATE_GPU,
+    DelegateMode,
     FACE_DETECTION_MODE,
     GESTURE_RECOGNITION_MODE,
-    InterfaceDelegate,
     OBJ_DETECTION_MODE,
 } from "@/utils/definitions";
 import { useEffect, useState } from "react";
@@ -24,10 +24,10 @@ type Props = {
 };
 
 const InterfaceDelegate = (props: Props) => {
-    const [delegate, setDelegate] = useState<InterfaceDelegate>(DELEGATE_GPU);
+    const [delegate, setDelegate] = useState<DelegateMode>(DELEGATE_GPU);
 
     const onValueChange = (value: string) => {
-        let newDelegate: InterfaceDelegate =
+        let newDelegate: DelegateMode =
             value === DELEGATE_GPU ? DELEGATE_GPU : DELEGATE_CPU;
 
         setDelegate(newDelegate);

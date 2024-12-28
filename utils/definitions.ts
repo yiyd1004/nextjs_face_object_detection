@@ -9,9 +9,9 @@ export const CONFIG_SLIDER_STEP: number = 0.2;
 export const VISION_URL: string =
     "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.12/wasm";
 
-export type InterfaceDelegate = "CPU" | "GPU";
-export const DELEGATE_GPU: InterfaceDelegate = "GPU";
-export const DELEGATE_CPU: InterfaceDelegate = "CPU";
+export type DelegateMode = "CPU" | "GPU";
+export const DELEGATE_GPU: DelegateMode = "GPU";
+export const DELEGATE_CPU: DelegateMode = "CPU";
 
 export type RunningMode = "IMAGE" | "VIDEO";
 export const RUNNING_MODE_IMAGE: RunningMode = "IMAGE";

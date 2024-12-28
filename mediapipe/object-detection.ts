@@ -1,7 +1,7 @@
 import Drawing3d from "@/lib/Drawing3d";
 import {
     DELEGATE_GPU,
-    InterfaceDelegate,
+    DelegateMode,
     ModelLoadResult,
     OBJECT_DETECTION_STR,
     OBJ_DETECTION_MODE,
@@ -37,7 +37,7 @@ const ObjectDetection = (() => {
     let maxResults: number = 5;
     let scoreThreshold: number = 0.5;
     let runningMode: RunningMode = RUNNING_MODE_VIDEO;
-    let delegate: InterfaceDelegate = DELEGATE_GPU;
+    let delegate: DelegateMode = DELEGATE_GPU;
 
     let objectDetector: ObjectDetector | null = null;
     let isUpdating: boolean = false;
@@ -100,8 +100,8 @@ const ObjectDetection = (() => {
     const getScoreThreshold = (): number => scoreThreshold;
     const setScoreThreshold = (score: number) => (scoreThreshold = score);
 
-    const getInterfaceDelegate = (): InterfaceDelegate => delegate;
-    const setInterfaceDelegate = (del: InterfaceDelegate) => (delegate = del);
+    const getInterfaceDelegate = (): DelegateMode => delegate;
+    const setInterfaceDelegate = (del: DelegateMode) => (delegate = del);
 
     const updateModelConfig = async () => {
         if (objectDetector) {

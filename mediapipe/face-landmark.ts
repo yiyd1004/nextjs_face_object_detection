@@ -1,7 +1,7 @@
 import Drawing3d from "@/lib/Drawing3d";
 import {
     DELEGATE_GPU,
-    InterfaceDelegate,
+    DelegateMode,
     RUNNING_MODE_VIDEO,
     RunningMode,
 } from "@/utils/definitions";
@@ -190,7 +190,7 @@ const FaceLandmarkDetection = (() => {
     let minTrackingConfidence: number = 0.5;
     let outputFaceBlendShapes: boolean = false;
     let outputFacialTransformationMatrixes: boolean = false;
-    let delegate: InterfaceDelegate = DELEGATE_GPU;
+    let delegate: DelegateMode = DELEGATE_GPU;
     let runningMode: RunningMode = RUNNING_MODE_VIDEO;
 
     let isUpdating: boolean = false;
@@ -314,8 +314,8 @@ const FaceLandmarkDetection = (() => {
     const setOutputFacialTransformationMatrixes = (val: boolean) =>
         (outputFacialTransformationMatrixes = val);
 
-    const getInterfaceDelegate = (): InterfaceDelegate => delegate;
-    const setInterfaceDelegate = (del: InterfaceDelegate) => (delegate = del);
+    const getInterfaceDelegate = (): DelegateMode => delegate;
+    const setInterfaceDelegate = (del: DelegateMode) => (delegate = del);
 
     const getDrawingMode = (): number => drawingMode;
     const setDrawingMode = (mode: number) => (drawingMode = mode);

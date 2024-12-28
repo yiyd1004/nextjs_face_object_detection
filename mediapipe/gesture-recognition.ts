@@ -1,9 +1,9 @@
 import Drawing3d from "@/lib/Drawing3d";
 import {
     DELEGATE_GPU,
+    DelegateMode,
     GESTURE_RECOGNITION_MODE,
     GESTURE_RECOGNITION_STR,
-    InterfaceDelegate,
     ModelLoadResult,
     RUNNING_MODE_VIDEO,
     RunningMode,
@@ -64,7 +64,7 @@ const GestureRecognition = (() => {
     let minHandDetectionConfidence: number = 0.5;
     let minHandPresenceConfidence: number = 0.5;
     let minTrackingConfidence: number = 0.5;
-    let delegate: InterfaceDelegate = DELEGATE_GPU;
+    let delegate: DelegateMode = DELEGATE_GPU;
     let runningMode: RunningMode = RUNNING_MODE_VIDEO;
 
     // canned_gesture_classifier_options
@@ -170,8 +170,8 @@ const GestureRecognition = (() => {
     const getRunningMode = (): RunningMode => runningMode;
     const setRunningMode = (mode: RunningMode) => (runningMode = mode);
 
-    const getInterfaceDelegate = (): InterfaceDelegate => delegate;
-    const setInterfaceDelegate = (del: InterfaceDelegate) => (delegate = del);
+    const getInterfaceDelegate = (): DelegateMode => delegate;
+    const setInterfaceDelegate = (del: DelegateMode) => (delegate = del);
 
     const detectGesture = (
         video: HTMLVideoElement

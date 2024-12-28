@@ -1,9 +1,9 @@
 import Drawing3d from "@/lib/Drawing3d";
 import {
     DELEGATE_GPU,
+    DelegateMode,
     FACE_DETECTION_MODE,
     FACE_DETECTION_STR,
-    InterfaceDelegate,
     ModelLoadResult,
     RUNNING_MODE_VIDEO,
     RunningMode,
@@ -35,7 +35,7 @@ const FaceDetection = (() => {
     let minDetectionConfidence: number = 0.5;
     let minSuppressionThreshold: number = 0.3;
     let runningMode: RunningMode = RUNNING_MODE_VIDEO;
-    let delegate: InterfaceDelegate = DELEGATE_GPU;
+    let delegate: DelegateMode = DELEGATE_GPU;
     let isUpdating: boolean = false;
 
     let faceDetector: FaceDetector | null = null;
@@ -99,8 +99,8 @@ const FaceDetection = (() => {
     const setMinSuppressionThreshold = (min: number) =>
         (minSuppressionThreshold = min);
 
-    const getInterfaceDelegate = (): InterfaceDelegate => delegate;
-    const setInterfaceDelegate = (del: InterfaceDelegate) => (delegate = del);
+    const getInterfaceDelegate = (): DelegateMode => delegate;
+    const setInterfaceDelegate = (del: DelegateMode) => (delegate = del);
 
     const updateModelConfig = async () => {
         if (faceDetector) {
