@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     output: "export",
-    basePath: "/nextjs_face_object_detection",
+    //basePath: "/nextjs_face_object_detection",
     images: {
         unoptimized: true,
     },
@@ -13,7 +13,7 @@ const nextConfig = {
                     { key: "Access-Control-Allow-Origin", value: "*" },
                     {
                         key: "Access-Control-Allow-Methods",
-                        value: "GET",
+                        value: "GET, POST, PUT, DELETE, OPTIONS",
                     },
                     {
                         key: "Access-Control-Allow-Headers",
