@@ -155,7 +155,8 @@ const Drawing3d = (() => {
                       textSize.width + 8,
                       textSize.fontBoundingBoxAscent +
                           textSize.fontBoundingBoxDescent +
-                          8
+                          8,
+                      0
                   )
                 : ctx.roundRect(
                       box.originX - 2,
@@ -163,7 +164,8 @@ const Drawing3d = (() => {
                       textSize.width + 8,
                       textSize.fontBoundingBoxAscent +
                           textSize.fontBoundingBoxDescent +
-                          8
+                          8,
+                      0
                   );
             ctx.fill();
 
